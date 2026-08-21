@@ -1,0 +1,381 @@
+/* =============================================
+   Modal pembayaran QRIS — dipakai bersama oleh checkout subscription
+   dan checkout pembelian course.
+
+   Dimuat lewat resources/views/partials/payment-modal.blade.php.
+   Variabel warna (--blue-primary, --slate-*, dst.) berasal dari
+   cart-checkout.css yang dimuat lebih dulu, jadi palet Mersif Lab
+   tetap dipakai apa adanya tanpa mendefinisikan warna baru.
+   ============================================= */
+
+.subs-pay-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+
+    /* Tombol mengambang AI Assistant memakai z-index 10000 (public/css/
+       ai-assistant.css) sehingga menutupi tombol footer modal di layar kecil.
+       Angka di sini hanya berlaku untuk modal pembayaran ini. */
+    z-index: 10050;
+
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(6px);
+
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.subs-pay-dialog {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100vh - 40px);
+
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e9ecef);
+    border-radius: var(--r-xl, 20px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+
+    font-family: var(--font-body, 'Poppins', system-ui, sans-serif);
+    animation: subsPayUp 0.3s ease-out;
+}
+
+@keyframes subsPayUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header ---------------------------------------------------------------- */
+
+.subs-pay-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    padding: 22px 24px;
+    background: linear-gradient(135deg, var(--blue-dark, #1f7ae0) 0%, var(--blue-primary, #1a76d1) 100%);
+    color: #fff;
+}
+
+.subs-pay-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.subs-pay-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.subs-pay-close {
+    flex: 0 0 auto;
+    margin-left: auto;
+
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+}
+
+.subs-pay-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Isi ------------------------------------------------------------------- */
+
+.subs-pay-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 22px 24px;
+    background: var(--slate-50, #f8fafc);
+}
+
+.subs-pay-invoice {
+    padding: 16px 18px;
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e9ecef);
+    border-radius: var(--r-md, 12px);
+}
+
+.subs-pay-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 5px 0;
+
+    font-size: 13.5px;
+    line-height: 1.7;
+}
+
+.subs-pay-label {
+    flex: 0 0 auto;
+    color: var(--text-secondary, #64748b);
+}
+
+.subs-pay-value {
+    text-align: right;
+    color: var(--text-primary, #1a1a1a);
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.subs-pay-value.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+}
+
+.subs-pay-divider {
+    height: 1px;
+    margin: 10px 0;
+    background: var(--border, #e9ecef);
+}
+
+/* Baris item (paket langganan / judul course yang dibeli) */
+.subs-pay-item {
+    align-items: flex-start;
+}
+
+.subs-pay-item .subs-pay-label {
+    flex: 1 1 auto;
+    padding-right: 8px;
+    text-align: left;
+    color: var(--text-primary, #1a1a1a);
+    font-weight: 500;
+}
+
+.subs-pay-item .subs-pay-value {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.subs-pay-row-total .subs-pay-label,
+.subs-pay-row-total .subs-pay-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--blue-primary, #1a76d1);
+}
+
+/* QRIS ------------------------------------------------------------------ */
+
+.subs-pay-qris {
+    margin-top: 16px;
+    padding: 20px 18px;
+    text-align: center;
+
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e9ecef);
+    border-radius: var(--r-md, 12px);
+}
+
+.subs-pay-qris-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: var(--blue-soft, #eaf3ff);
+    color: var(--blue-primary, #1a76d1);
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Bingkai QR: kotak agar kode selalu di tengah dan tidak gepeng. */
+.subs-pay-qris-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    max-width: 260px;
+    margin: 14px auto 0;
+    padding: 12px;
+
+    background: #fff;
+    border: 1px solid var(--border, #e9ecef);
+    border-radius: var(--r-md, 12px);
+}
+
+.subs-pay-qris-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border-radius: 6px;
+}
+
+.subs-pay-qris-missing {
+    padding: 22px 8px;
+    color: var(--text-secondary, #64748b);
+}
+
+.subs-pay-qris-missing i {
+    font-size: 34px;
+    opacity: 0.45;
+}
+
+.subs-pay-qris-missing p {
+    margin: 10px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.subs-pay-qris-amount {
+    margin: 14px 0 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary, #1a1a1a);
+}
+
+.subs-pay-qris-hint {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--text-secondary, #64748b);
+}
+
+/* Panduan --------------------------------------------------------------- */
+
+.subs-pay-steps {
+    margin: 16px 0 0;
+    padding: 16px 18px 16px 36px;
+
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e9ecef);
+    border-radius: var(--r-md, 12px);
+}
+
+.subs-pay-steps li {
+    padding: 3px 0;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--slate-500, #475569);
+}
+
+.subs-pay-steps strong {
+    color: var(--text-primary, #1a1a1a);
+    font-weight: 600;
+}
+
+.subs-pay-wa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    margin-top: 14px;
+    padding: 11px 18px;
+    border-radius: var(--r-md, 12px);
+    background: #25d366;
+    color: #fff;
+
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease-in-out;
+}
+
+.subs-pay-wa:hover {
+    background: #1fb457;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.3);
+}
+
+/* Footer ---------------------------------------------------------------- */
+
+.subs-pay-footer {
+    display: flex;
+    gap: 10px;
+
+    padding: 16px 24px;
+    background: var(--white, #fff);
+    border-top: 1px solid var(--border, #e9ecef);
+}
+
+.subs-pay-btn {
+    flex: 1 1 0;
+    padding: 11px 18px;
+    border-radius: var(--r-md, 12px);
+
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.25s ease-in-out;
+}
+
+.subs-pay-btn-primary {
+    background: var(--blue-primary, #1a76d1);
+    border: 1px solid var(--blue-primary, #1a76d1);
+    color: #fff;
+}
+
+.subs-pay-btn-primary:hover {
+    background: var(--blue-dark, #1f7ae0);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 118, 209, 0.28);
+}
+
+.subs-pay-btn-ghost {
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e9ecef);
+    color: var(--slate-500, #475569);
+}
+
+.subs-pay-btn-ghost:hover {
+    background: var(--slate-100, #f1f5f9);
+    color: var(--text-primary, #1a1a1a);
+}
+
+/* Layar kecil ----------------------------------------------------------- */
+
+@media (max-width: 575.98px) {
+    .subs-pay-modal {
+        padding: 10px;
+    }
+
+    .subs-pay-dialog {
+        max-height: calc(100vh - 20px);
+    }
+
+    .subs-pay-header,
+    .subs-pay-body,
+    .subs-pay-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .subs-pay-footer {
+        flex-direction: column;
+    }
+
+    .subs-pay-title {
+        font-size: 17px;
+    }
+
+    .subs-pay-qris-amount {
+        font-size: 20px;
+    }
+}

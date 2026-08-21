@@ -19,6 +19,8 @@ class User extends Authenticatable
         'is_subscriber',
         'subscription_expires_at',
         'subscription_plan',
+        'subscription_started_at',
+        'subscription_cancelled_at',
         'google_id',
         'telephone',
         'biography',
@@ -37,6 +39,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'subscription_expires_at' => 'datetime',
+        'subscription_started_at' => 'datetime',
+        'subscription_cancelled_at' => 'datetime',
         'is_banned' => 'boolean',
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',

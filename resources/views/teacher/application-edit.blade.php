@@ -362,7 +362,7 @@
 
                         <!-- Action Buttons -->
                         <div class="action-buttons">
-                            <a href="{{ route('teacher.application.preview') }}" class="btn btn-outline-secondary btn-lg">
+                            <a href="{{ back_url(route('teacher.application.preview')) }}" class="btn btn-outline-secondary btn-lg">
                                 <i class="fas fa-arrow-left me-2"></i>Back to Preview
                             </a>
                             <button type="submit" class="btn btn-primary btn-lg">

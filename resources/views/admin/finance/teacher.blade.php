@@ -2,7 +2,63 @@
 
 @section('title', 'Teacher Financial Management - ' . $teacher->name)
 
+@section('styles')
+{{--
+    Tombol kembali ke Financial Dashboard.
+    Warna & bentuk mengikuti tombol "Kembali" yang sudah dipakai di halaman
+    Detail Penarikan (admin/finance/withdrawal-detail.blade.php), yaitu tombol
+    sekunder putih dengan teks biru #2F80ED, supaya konsisten dengan tema
+    Admin Dashboard MersifLab. Style di-scope ke kelas .btn-back-finance saja
+    agar tidak menyentuh komponen lain.
+--}}
+<style>
+    .btn-back-finance {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #2F80ED;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-back-finance:hover,
+    .btn-back-finance:focus {
+        background: #f8f9fa;
+        border-color: #2F80ED;
+        color: #1c62c4;
+        box-shadow: 0 2px 6px rgba(47, 128, 237, 0.15);
+        text-decoration: none;
+    }
+
+    /* Panah bergeser sedikit ke kiri saat hover - petunjuk arah "kembali". */
+    .btn-back-finance i {
+        transition: transform 0.2s ease;
+    }
+
+    .btn-back-finance:hover i {
+        transform: translateX(-3px);
+    }
+
+    .page-title-back {
+        margin-bottom: 12px;
+    }
+</style>
+@endsection
+
 @section('content')
+<!-- Tombol kembali ke halaman utama Financial Management -->
+<div class="page-title-back">
+    <a href="{{ back_url(route('admin.finance.dashboard')) }}" class="btn-back-finance">
+        <i class="fas fa-arrow-left"></i>Kembali ke Financial Management
+    </a>
+</div>
+
 <div class="page-title" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
     <div>
         <h1>Financial Management - {{ $teacher->name }}</h1>
@@ -11,7 +67,7 @@
 
 <!-- Balance Overview -->
 <div class="row mb-4">
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-balance">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Blue Theme) -->
@@ -19,14 +75,17 @@
                     <i class="fas fa-wallet"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Current Balance</div>
-                    <div class="stat-value counter" data-count="{{ $balance->balance }}">0</div>
+                    {{-- Nilai akhir dirender langsung dari server: tidak ada kedipan
+                         angka "0" sebelum animasi, dan nominalnya tetap benar
+                         seandainya JavaScript gagal dimuat. --}}
+                    <div class="stat-value counter" data-count="{{ $balance->balance }}">Rp {{ number_format($balance->balance, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-earnings">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Green Theme) -->
@@ -34,14 +93,14 @@
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Total Earnings</div>
-                    <div class="stat-value counter" data-count="{{ $balance->total_earnings }}">0</div>
+                    <div class="stat-value counter" data-count="{{ $balance->total_earnings }}">Rp {{ number_format($balance->total_earnings, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-withdrawn">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Orange Theme) -->
@@ -49,14 +108,14 @@
                     <i class="fas fa-hand-holding-usd"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Total Withdrawn</div>
-                    <div class="stat-value counter" data-count="{{ $balance->total_withdrawn }}">0</div>
+                    <div class="stat-value counter" data-count="{{ $balance->total_withdrawn }}">Rp {{ number_format($balance->total_withdrawn, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-pending">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Purple Theme) -->
@@ -64,9 +123,9 @@
                     <i class="fas fa-clock"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Pending Earnings</div>
-                    <div class="stat-value counter" data-count="{{ $balance->pending_earnings }}">0</div>
+                    <div class="stat-value counter" data-count="{{ $balance->pending_earnings }}">Rp {{ number_format($balance->pending_earnings, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
@@ -267,7 +326,19 @@
                             </td>
                             <td style="border: none; padding: 16px 8px; vertical-align: middle;">{{ $withdrawal->bank_name }}</td>
                             <td style="border: none; padding: 16px 8px; vertical-align: middle;">
-                                <span class="badge" style="background: {{ $withdrawal->status == 'pending' ? '#fff3cd' : ($withdrawal->status == 'approved' ? '#d4edda' : '#f8d7da') }}; color: {{ $withdrawal->status == 'pending' ? '#856404' : ($withdrawal->status == 'approved' ? '#155724' : '#721c24') }}; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500;">
+                                @php
+                                    // Sebelumnya rantai ternary hanya mengenali 'pending' dan
+                                    // 'approved'; sisanya - termasuk 'processed' - jatuh ke merah
+                                    // seolah-olah gagal. Palet pastelnya dipertahankan persis,
+                                    // hanya pemetaannya yang dilengkapi.
+                                    [$badgeBg, $badgeFg] = match ($withdrawal->status) {
+                                        'pending' => ['#fff3cd', '#856404'],   // kuning - menunggu
+                                        'approved' => ['#d4edda', '#155724'],  // hijau  - sudah cair
+                                        'processed' => ['#cfe2ff', '#084298'], // biru   - sedang diproses
+                                        default => ['#f8d7da', '#721c24'],     // merah  - ditolak
+                                    };
+                                @endphp
+                                <span class="badge" style="background: {{ $badgeBg }}; color: {{ $badgeFg }}; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500;">
                                     {{ $withdrawal->status_label }}
                                 </span>
                             </td>
@@ -303,13 +374,26 @@
 }
 
 .stat-icon-container {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    /* Jarak ikon-teks dirapatkan dari 16px (me-3) ke 12px. Bersama ukuran
+       ikon yang sedikit dikecilkan, ini mengembalikan ~20px ruang untuk
+       kolom nominal - cukup untuk angka belasan juta. */
+    margin-right: 12px !important;
+}
+
+/* Pembungkus teks kanan ikon.
+   min-width: 0 penting: anak flex secara bawaan punya min-width auto sehingga
+   MENOLAK menyusut di bawah lebar kontennya, dan itulah yang membuat nominal
+   panjang mendorong keluar sampai mepet tepi kartu. */
+.stat-text {
+    min-width: 0;
+    padding-right: 8px;
 }
 
 .stat-icon-balance-bg {
@@ -358,9 +442,22 @@
 }
 
 .stat-value {
-    font-size: 28px;
+    /* Ukuran menyesuaikan lebar layar: 22px di monitor lebar, mengecil
+       sampai 17px saat kolom menyempit. 28px sebelumnya membuat
+       "Rp 1.070.000" (~176px) melebihi kolom teks yang hanya ~141px. */
+    font-size: clamp(17px, 1.45vw, 22px);
     font-weight: 700;
+    /* tracking-tight: merapatkan sedikit tanpa mengurangi keterbacaan. */
+    letter-spacing: -0.02em;
     color: #333333;
+    line-height: 1.25;
+    /* Angka memakai lebar digit seragam (tabular figures) supaya teks tidak
+       bergoyang saat nilainya berubah tiap frame. Tanpa ini, digit "1" yang
+       lebih sempit dari "8" membuat lebar teks berubah-ubah dan terlihat
+       seperti flickering. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    white-space: nowrap;
 }
 
 .card-content {
@@ -475,31 +572,93 @@
 </style>
 
 <script>
-// Count-Up Animation for Teacher Finance Stats
-function animateCountUp(element) {
-    const target = parseInt(element.getAttribute('data-count')) || 0;
-    const duration = 2000; // 2 seconds
-    const increment = target / (duration / 16); // 60fps
-    let current = 0;
+/* =========================================================================
+   Count-Up Animation — Teacher Finance Stats
+   =========================================================================
+   Implementasi lama memakai setInterval(…, 16) dengan penambahan tetap
+   (increment = target / (duration/16)). Tiga masalah pada pendekatan itu:
 
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            current = target;
-            clearInterval(timer);
-        }
-        element.textContent = 'Rp ' + Math.floor(current).toLocaleString('id-ID');
-    }, 16);
+     1. setInterval tidak tersinkron dengan refresh layar, sehingga frame
+        sering meleset/menumpuk -> gerakan terasa patah-patah.
+     2. Kemajuan angka dihitung dari JUMLAH TICK, bukan waktu nyata. Kalau
+        browser sempat sibuk atau tab tidak aktif, angkanya jadi melenceng
+        dan animasi berjalan lebih lama dari semestinya.
+     3. Durasi 2 detik + jeda antar kartu 200ms membuat kartu terakhir baru
+        selesai di detik ~2,6.
+
+   Versi ini memakai requestAnimationFrame dengan basis waktu nyata
+   (performance.now()), easing easeOutExpo, dan durasi 900ms.
+   ========================================================================= */
+
+/** Format nominal rupiah, sama persis dengan format dari server. */
+function formatRupiah(value) {
+    return 'Rp ' + Math.round(value).toLocaleString('id-ID');
 }
 
-// Initialize count-up animation for all stat cards with class "counter"
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * easeOutExpo — cepat di awal lalu melambat halus mendekati nilai akhir,
+ * sehingga terasa responsif sekaligus rapi saat berhenti.
+ */
+function easeOutExpo(t) {
+    return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+}
+
+function animateCountUp(element, delay) {
+    const target = parseFloat(element.getAttribute('data-count')) || 0;
+    const duration = 900; // 0,9 detik
+
+    // Lebar kotak dikunci sesuai nilai AKHIR (nilai terpanjang) sebelum
+    // animasi mulai, supaya tidak ada layout shift saat jumlah digit
+    // bertambah dari "Rp 0" menuju "Rp 1.018.640".
+    element.style.minWidth = element.getBoundingClientRect().width + 'px';
+    element.style.display = 'inline-block';
+
+    let startTime = null;
+
+    function frame(now) {
+        if (startTime === null) {
+            startTime = now;
+        }
+
+        // Progres dihitung dari waktu nyata, bukan jumlah frame, sehingga
+        // durasi tetap 900ms walau ada frame yang terlewat.
+        const progress = Math.min((now - startTime) / duration, 1);
+
+        element.textContent = formatRupiah(target * easeOutExpo(progress));
+
+        if (progress < 1) {
+            requestAnimationFrame(frame);
+        } else {
+            // Pastikan berhenti tepat di nilai asli dari server.
+            element.textContent = formatRupiah(target);
+        }
+    }
+
+    element.textContent = formatRupiah(0);
+    window.setTimeout(function () {
+        requestAnimationFrame(frame);
+    }, delay);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
     const statValues = document.querySelectorAll('.counter[data-count]');
-    statValues.forEach((element, index) => {
-        // Stagger animation start for visual effect
-        setTimeout(() => {
-            animateCountUp(element);
-        }, index * 200);
+
+    // Hormati pengguna yang mematikan animasi di sistemnya: nilai akhir
+    // langsung ditampilkan tanpa animasi.
+    const prefersReducedMotion = window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion || typeof requestAnimationFrame !== 'function') {
+        statValues.forEach(function (element) {
+            element.textContent = formatRupiah(parseFloat(element.getAttribute('data-count')) || 0);
+        });
+        return;
+    }
+
+    statValues.forEach(function (element, index) {
+        // Jeda antar kartu dipersingkat (80ms) agar keempatnya selesai
+        // sekitar 1,1 detik, bukan 2,6 detik seperti sebelumnya.
+        animateCountUp(element, index * 80);
     });
 });
 

@@ -21,9 +21,15 @@
                     <h2 class="verification-title">Check Your Email</h2>
                     
                     <!-- Subtitle -->
+                    @php
+                        // Email diambil dari flash session, lalu fallback ke session
+                        // "pending_verification_email" agar tetap ada setelah refresh.
+                        $verificationEmail = session('email', $pendingEmail ?? null);
+                    @endphp
+
                     <p class="verification-subtitle">
                         We have sent a verification link to<br>
-                        <strong>{{ session('email', 'email@gmail.com') }}</strong>
+                        <strong>{{ $verificationEmail ?? 'your email address' }}</strong>
                     </p>
                     
                     <!-- Error Alert -->
@@ -85,10 +91,10 @@
                         <p>Haven't received the email?</p>
                         
                         <!-- Resend Form -->
-                        <form action="{{ route('verify.resend') }}" method="POST">
+                        <form action="{{ route('verify.resend') }}" method="POST" id="resendForm">
                             @csrf
-                            <input type="hidden" name="email" value="{{ session('email') }}">
-                            <button type="submit" class="btn-resend">
+                            <input type="hidden" name="email" value="{{ $verificationEmail }}">
+                            <button type="submit" class="btn-resend" id="resendBtn">
                                 <i class="fas fa-redo"></i>
                                 <span>Resend Verification Email</span>
                             </button>
@@ -114,4 +120,17 @@
         </div>
     </div>
 </section>
+@endsection
+
+@section('scripts')
+<script>
+    // Loading state + cegah submit ganda saat request resend masih berjalan.
+    document.getElementById('resendForm')?.addEventListener('submit', function () {
+        const btn = document.getElementById('resendBtn');
+        if (!btn) return;
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><span>Sending…</span>';
+    });
+</script>
 @endsection

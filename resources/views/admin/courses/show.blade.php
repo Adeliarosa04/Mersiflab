@@ -9,7 +9,7 @@
             <h1>Course Inspection & Moderation</h1>
             <p style="color: #828282; margin: 5px 0 0 0; font-size: 14px;">Review course content for policy violations</p>
         </div>
-        <a href="{{ route('admin.dashboard') }}" class="btn" style="background: #2F80ED; color: white; border: none; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+        <a href="{{ back_url(route('admin.dashboard')) }}" class="btn" style="background: #2F80ED; color: white; border: none; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500;">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
         </a>
     </div>

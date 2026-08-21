@@ -328,31 +328,51 @@ class CartController extends Controller
             return redirect()->back()->with('info', 'Anda sudah memiliki akses lifetime untuk course ini.');
         }
 
-        // Check if there's a pending purchase for this course
-        $hasPendingPurchase = Purchase::where('user_id', auth()->id())
-            ->where('class_id', $courseId)
-            ->where('status', 'pending')
-            ->exists();
-
-        if ($hasPendingPurchase) {
-            return redirect()->back()->with('error', 'Anda sudah memiliki pembelian pending untuk course ini. Silakan tunggu persetujuan admin terlebih dahulu.');
-        }
-
         $amount = $course->discounted_price ?? $course->price ?? 150000;
 
         // Set flag to skip auto-invoice creation (invoice akan dibuat saat user klik "Bayar Sekarang")
         Session::put('skip_auto_invoice', true);
 
-        // Create a pending purchase record (no enrollment yet)
-        $purchase = Purchase::create([
-            'purchase_code' => Purchase::generatePurchaseCode(),
-            'user_id' => auth()->id(),
-            'class_id' => $courseId,
-            'amount' => $amount,
-            'status' => 'pending',
-            'payment_method' => null,
-            'payment_provider' => null,
-        ]);
+        // Pending purchase yang belum dibayar dipakai ulang, bukan ditolak.
+        // Sebelumnya siswa dipentalkan dengan pesan "tunggu persetujuan admin",
+        // padahal belum ada invoice apa pun untuk disetujui — akibatnya course
+        // itu tidak pernah bisa dibeli lagi setelah sesi checkout hilang.
+        $purchase = Purchase::where('user_id', auth()->id())
+            ->where('class_id', $courseId)
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if ($purchase) {
+            // Invoice-nya sudah terbit: antarkan ke invoice itu — lengkap dengan
+            // QRIS-nya — daripada menerbitkan nomor invoice baru yang membatalkan
+            // tagihan yang mungkin sudah dibayar siswa.
+            $existingInvoice = \App\Models\Invoice::where('invoiceable_id', $purchase->id)
+                ->where('invoiceable_type', Purchase::class)
+                ->whereIn('status', ['pending', 'paid'])
+                ->latest('id')
+                ->first();
+
+            if ($existingInvoice) {
+                Session::forget('skip_auto_invoice');
+
+                return redirect()->route('invoice', $existingInvoice->id)
+                    ->with('info', 'Anda sudah memiliki invoice untuk course ini. Silakan selesaikan pembayarannya.');
+            }
+        }
+
+        if (!$purchase) {
+            // Create a pending purchase record (no enrollment yet)
+            $purchase = Purchase::create([
+                'purchase_code' => Purchase::generatePurchaseCode(),
+                'user_id' => auth()->id(),
+                'class_id' => $courseId,
+                'amount' => $amount,
+                'status' => 'pending',
+                'payment_method' => null,
+                'payment_provider' => null,
+            ]);
+        }
 
         // JANGAN hapus cart di sini - cart akan dihapus setelah payment berhasil di processPayment()
         // Cart harus tetap ada jika user kembali ke halaman sebelumnya
@@ -382,10 +402,83 @@ class CartController extends Controller
     /**
      * Show checkout/invoice page for the latest pending purchase
      */
+    /**
+     * Bangun ulang data checkout dari database.
+     *
+     * Seluruh alur checkout course bergantung pada session (latest_purchase_ids,
+     * checkout_items, checkout_total_amount). Begitu session habis — tutup
+     * browser, ganti perangkat, atau kembali esok hari — data itu hilang,
+     * sementara baris Purchase berstatus pending tetap ada di database.
+     * Akibatnya siswa terkunci: checkout menolak karena session kosong, dan
+     * pembelian baru dulu ditolak karena sudah ada pending.
+     *
+     * Fungsi ini menyusun ulang session dari pending purchase milik siswa yang
+     * belum punya invoice, sehingga alurnya bisa dilanjutkan.
+     *
+     * @return array<int> daftar id purchase yang dipulihkan
+     */
+    private function restoreCheckoutFromPendingPurchases(): array
+    {
+        $pendingPurchases = Purchase::with('course')
+            ->where('user_id', auth()->id())
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->get()
+            ->filter(function ($purchase) {
+                // Purchase yang invoice-nya sudah terbit menunggu verifikasi admin,
+                // jadi tidak boleh ikut di-checkout ulang.
+                return $purchase->course
+                    && ! \App\Models\Invoice::where('invoiceable_id', $purchase->id)
+                        ->where('invoiceable_type', Purchase::class)
+                        ->whereIn('status', ['pending', 'paid'])
+                        ->exists();
+            })
+            ->values();
+
+        if ($pendingPurchases->isEmpty()) {
+            return [];
+        }
+
+        $purchaseIds = [];
+        $items = [];
+        $courseIds = [];
+        $total = 0;
+
+        foreach ($pendingPurchases as $purchase) {
+            $purchaseIds[] = $purchase->id;
+            $courseIds[] = $purchase->class_id;
+            $total += (float) $purchase->amount;
+
+            $items[] = [
+                'name' => $purchase->course->name ?? 'Course Tidak Diketahui',
+                'title' => $purchase->course->name ?? 'Course Tidak Diketahui',
+                'price' => (float) $purchase->amount,
+                'amount' => (float) $purchase->amount,
+                'course_id' => $purchase->class_id,
+                'purchase_code' => $purchase->purchase_code,
+            ];
+        }
+
+        session([
+            'latest_purchase_ids' => $purchaseIds,
+            'latest_purchase_id' => $purchaseIds[0],
+            'checkout_items' => $items,
+            'checkout_total_amount' => $total,
+            'checkout_course_ids' => $courseIds,
+        ]);
+
+        return $purchaseIds;
+    }
+
     public function showCheckout()
     {
         // Support both single purchase (from buyNow) and multiple purchases (from cart prepareCheckout)
         $purchaseIds = session('latest_purchase_ids');
+
+        // Session checkout hilang tapi pembelian pending-nya masih ada di database.
+        if (empty($purchaseIds) && ! session('latest_purchase_id')) {
+            $purchaseIds = $this->restoreCheckoutFromPendingPurchases();
+        }
 
         if ($purchaseIds && is_array($purchaseIds) && count($purchaseIds) > 0) {
             $purchases = Purchase::with([
@@ -557,6 +650,14 @@ class CartController extends Controller
 
         // Get purchase IDs from session
         $purchaseIds = session('latest_purchase_ids');
+
+        // Session checkout bisa habis di antara membuka halaman dan menekan
+        // "Bayar Sekarang". Pulihkan dari pending purchase milik siswa sendiri
+        // agar pembayaran tidak gagal hanya karena session kedaluwarsa.
+        if (empty($purchaseIds) || !is_array($purchaseIds)) {
+            $purchaseIds = $this->restoreCheckoutFromPendingPurchases();
+        }
+
         $items = session('checkout_items', []);
         $totalAmount = session('checkout_total_amount', 0);
         $selectedCourseIds = session('checkout_course_ids', []);
@@ -675,6 +776,10 @@ class CartController extends Controller
                     'message' => 'Invoice pembayaran telah dikirim ke email Anda.',
                     'invoice_number' => $invoice->invoice_number,
                     'items_count' => count($invoiceItemsData),
+
+                    // Rincian invoice + QRIS agar modal pembayaran bisa langsung
+                    // ditampilkan tanpa permintaan susulan.
+                    'payment' => $this->paymentPayload($invoice, $purchases, $items),
                 ]);
 
             } catch (\Exception $e) {
@@ -691,6 +796,51 @@ class CartController extends Controller
                 ], 500);
             }
         });
+    }
+
+    /**
+     * Rincian yang dibutuhkan modal pembayaran QRIS pada checkout course.
+     *
+     * Bentuknya sengaja disamakan dengan SubscriptionController::paymentPayload
+     * supaya satu partial + satu berkas JS melayani kedua alur checkout.
+     *
+     * QRIS-nya adalah QR merchant statis yang sama dengan yang dipakai email
+     * invoice dan PDF — bukan QR dinamis dari payment gateway.
+     */
+    private function paymentPayload(\App\Models\Invoice $invoice, $purchases, array $items): array
+    {
+        $qrisPath = config('app.payment.qris_image_path');
+        $total = (float) $invoice->total_amount;
+        $codes = $purchases->pluck('purchase_code')->filter()->implode(', ');
+
+        $lines = [];
+        foreach ($items as $item) {
+            $amount = (float) ($item['amount'] ?? $item['price'] ?? 0);
+            $lines[] = [
+                'name' => $item['name'] ?? $item['title'] ?? 'Course',
+                'amount' => 'Rp' . number_format($amount, 0, ',', '.'),
+            ];
+        }
+
+        $confirmText = 'Halo MersifLab, saya ingin konfirmasi pembayaran untuk invoice '
+            . $invoice->invoice_number . ' sebesar Rp' . number_format($total, 0, ',', '.');
+
+        return [
+            'invoice_id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'invoice_url' => route('invoice', $invoice->id),
+            'reference' => $codes !== '' ? $codes : $invoice->invoice_number,
+            'items' => $lines,
+            'created_at' => $invoice->created_at->format('d M Y, H:i') . ' WIB',
+            'due_date' => $invoice->due_date ? $invoice->due_date->format('d M Y, H:i') . ' WIB' : null,
+            'subtotal' => 'Rp' . number_format($total, 0, ',', '.'),
+            'discount' => 'Rp0',
+            'has_discount' => false,
+            'total' => 'Rp' . number_format($total, 0, ',', '.'),
+            'qris_url' => $qrisPath && file_exists(public_path($qrisPath)) ? asset($qrisPath) : null,
+            'whatsapp_url' => 'https://wa.me/' . config('app.payment.whatsapp_number')
+                . '?text=' . rawurlencode($confirmText),
+        ];
     }
 
     /**

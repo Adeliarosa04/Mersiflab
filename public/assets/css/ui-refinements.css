@@ -1,0 +1,358 @@
+/* ==========================================================================
+   MersifLab — Lapisan penyempurnaan visual global
+   ==========================================================================
+
+   Berkas ini dimuat PALING AKHIR pada layouts/app.blade.php sehingga bisa
+   merapikan gaya halaman tanpa perlu mengubah berkas CSS yang sudah ada.
+
+   Lingkup yang disentuh SANGAT dibatasi:
+     - jarak (margin/padding) antar section        -> whitespace
+     - border-radius & box-shadow pada kartu       -> kesan modern
+     - transisi & hover pada kartu/tombol          -> interaksi halus
+     - ukuran/berat/line-height tipografi          -> hierarki visual
+
+   Yang TIDAK disentuh:
+     - warna merek (tidak ada satu pun deklarasi warna baru pada elemen
+       berwarna; hanya abu-abu netral untuk bayangan dan warna teks
+       sekunder yang memang sudah dipakai di CSS existing)
+     - layout (display/flex/grid/width), struktur, teks, maupun perilaku
+   ========================================================================== */
+
+:root {
+    /* Bayangan berlapis — lebih lembut daripada satu blur besar. */
+    --ml-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04),
+                    0 4px 12px rgba(16, 24, 40, 0.06);
+    --ml-shadow-md: 0 2px 4px rgba(16, 24, 40, 0.05),
+                    0 8px 24px rgba(16, 24, 40, 0.08);
+    --ml-shadow-lg: 0 4px 8px rgba(16, 24, 40, 0.06),
+                    0 16px 40px rgba(16, 24, 40, 0.12);
+
+    --ml-radius: 16px;
+    --ml-radius-sm: 12px;
+
+    /* Transisi seragam: 0.3s ease-in-out. */
+    --ml-ease: 0.3s ease-in-out;
+}
+
+/* ==========================================================================
+   0. HIGIENE RESPONSIF
+   ========================================================================== */
+
+/* Media tidak boleh melampaui lebar kolomnya di layar kecil. */
+main img,
+main video,
+main iframe,
+main table {
+    max-width: 100%;
+}
+
+/* ==========================================================================
+   1. TIPOGRAFI — hierarki lebih tegas, keterbacaan lebih nyaman
+   ========================================================================== */
+
+body {
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Judul: sedikit lebih rapat agar terbaca sebagai satu blok. */
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+
+/* Paragraf konten diberi ruang baca yang lebih lega. */
+main p {
+    line-height: 1.75;
+}
+
+/* Judul halaman */
+.page-title {
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+    line-height: 1.7;
+    max-width: 62ch;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Judul section — dinaikkan sedikit agar kontras terhadap isi lebih jelas. */
+.section-title {
+    font-size: 1.65rem;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+}
+
+/* Panjang baris dijaga agar nyaman dibaca, tetapi cukup lebar sehingga
+   subtitle pendek tidak ikut terpotong ke baris kedua. */
+.section-subtitle,
+.free-class-subtitle {
+    line-height: 1.7;
+    max-width: 82ch;
+}
+
+/* Teks rata kanan-kiri menciptakan celah antar kata yang tidak rata dan
+   membuat paragraf panjang lebih sulit dibaca. */
+.story-card p {
+    text-align: left;
+}
+
+@media (max-width: 767px) {
+    .section-title {
+        font-size: 1.3rem;
+    }
+}
+
+/* ==========================================================================
+   2. WHITESPACE — irama vertikal antar section
+   ========================================================================== */
+
+/* Halaman Courses */
+.courses-page .page-header {
+    margin-bottom: 48px;
+}
+
+.courses-page .free-class-section,
+.courses-page .popular-section,
+.courses-page .featured-section,
+.courses-page .instructors-section {
+    margin-bottom: 64px;
+}
+
+.courses-page .all-courses-section {
+    padding-bottom: 32px;
+}
+
+/* Jarak judul section ke isinya */
+.section-header {
+    margin-bottom: 28px;
+}
+
+/* Halaman About */
+.about-hero {
+    margin-bottom: 40px;
+}
+
+.stats-section {
+    padding: 48px 0;
+}
+
+/* Halaman auth */
+.auth-section {
+    padding-top: 56px;
+    padding-bottom: 72px;
+}
+
+/* Halaman legal */
+.legal-wrapper {
+    padding-top: 40px;
+}
+
+/* Footer — beri ruang agar tidak menempel pada konten di atasnya. */
+.footer-section {
+    margin-top: 64px;
+}
+
+.footer-section .container {
+    padding-top: 56px;
+    padding-bottom: 48px;
+}
+
+.footer-section h5 {
+    margin-bottom: 18px;
+    letter-spacing: 0.01em;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    transition: opacity var(--ml-ease), transform var(--ml-ease);
+    display: inline-block;
+}
+
+.footer-links a:hover {
+    opacity: 0.85;
+    transform: translateX(3px);
+}
+
+@media (max-width: 767px) {
+    .courses-page .free-class-section,
+    .courses-page .popular-section,
+    .courses-page .featured-section,
+    .courses-page .instructors-section {
+        margin-bottom: 44px;
+    }
+
+    .courses-page .page-header {
+        margin-bottom: 32px;
+    }
+
+    .footer-section {
+        margin-top: 44px;
+    }
+
+    .footer-section .container {
+        padding-top: 40px;
+        padding-bottom: 32px;
+    }
+
+    .auth-section {
+        padding-top: 36px;
+        padding-bottom: 48px;
+    }
+}
+
+/* ==========================================================================
+   3. KARTU — sudut halus, bayangan lembut, hover terangkat
+   ========================================================================== */
+
+.popular-course-card,
+.course-card,
+.featured-card,
+.instructor-card,
+.free-class-card,
+.stat-card,
+.auth-card,
+.legal-content,
+.legal-toc {
+    border-radius: var(--ml-radius);
+    box-shadow: var(--ml-shadow-sm);
+    transition: transform var(--ml-ease),
+                box-shadow var(--ml-ease),
+                border-color var(--ml-ease);
+}
+
+/* Hover: terangkat halus + bayangan menebal.
+   Hanya pada perangkat yang benar-benar punya kursor. */
+@media (hover: hover) and (pointer: fine) {
+    .popular-course-card:hover,
+    .course-card:hover,
+    .featured-card:hover,
+    .instructor-card:hover,
+    .free-class-card:hover,
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--ml-shadow-lg);
+    }
+}
+
+/* Kartu statis (bukan tautan) cukup bayangan lembut tanpa animasi angkat. */
+.filters-card,
+.legal-content,
+.legal-toc {
+    box-shadow: var(--ml-shadow-sm);
+}
+
+.filters-card {
+    border-radius: var(--ml-radius);
+}
+
+/* Kartu autentikasi sedikit lebih menonjol karena berdiri sendiri. */
+.auth-card {
+    box-shadow: var(--ml-shadow-md);
+}
+
+/* Hormati preferensi pengguna yang mematikan animasi. */
+@media (prefers-reduced-motion: reduce) {
+    .popular-course-card,
+    .course-card,
+    .featured-card,
+    .instructor-card,
+    .free-class-card,
+    .stat-card,
+    .btn,
+    .ml-btn,
+    .free-class-btn {
+        transition: none;
+    }
+
+    .popular-course-card:hover,
+    .course-card:hover,
+    .featured-card:hover,
+    .instructor-card:hover,
+    .free-class-card:hover,
+    .stat-card:hover {
+        transform: none;
+    }
+}
+
+/* ==========================================================================
+   4. TOMBOL (CTA) — transisi seragam & umpan balik hover yang halus
+   ========================================================================== */
+
+.btn,
+.ml-btn,
+.free-class-btn {
+    transition: transform var(--ml-ease),
+                box-shadow var(--ml-ease),
+                background-color var(--ml-ease),
+                border-color var(--ml-ease),
+                color var(--ml-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover,
+    .ml-btn:hover,
+    .free-class-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--ml-shadow-md);
+    }
+}
+
+/* Saat ditekan, tombol kembali turun — memberi kesan taktil. */
+.btn-primary:active,
+.ml-btn:active,
+.free-class-btn:active {
+    transform: translateY(0);
+}
+
+/* Fokus keyboard tetap terlihat jelas (aksesibilitas). */
+.btn:focus-visible,
+.ml-btn:focus-visible,
+.free-class-btn:focus-visible,
+.free-class-card:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+/* Tombol yang sedang menunggu proses tidak ikut terangkat. */
+.btn[disabled],
+.btn.disabled,
+.btn[aria-busy="true"] {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ==========================================================================
+   5. FORM — sudut & fokus yang konsisten dengan kartu
+   ========================================================================== */
+
+.form-control,
+.form-select,
+.input-group-text {
+    border-radius: var(--ml-radius-sm);
+    transition: border-color var(--ml-ease), box-shadow var(--ml-ease);
+}
+
+/* Bootstrap membulatkan sudut dalam input-group; kembalikan agar rapi. */
+.input-group > :not(:first-child):not(.dropdown-menu) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group > :not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 6px;
+}

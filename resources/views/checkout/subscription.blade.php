@@ -4,21 +4,47 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/cart-checkout.css') }}">
+{{-- Modal pembayaran QRIS, dipakai bersama dengan checkout course. --}}
+<link rel="stylesheet" href="{{ asset('assets/css/payment-modal.css') }}">
 @endsection
 
 @section('content')
 <div class="checkout-page">
     <div class="container">
         <div class="checkout-wrapper">
+            @php
+                // Konteks paket dihitung dengan aturan yang sama seperti backend
+                // (SubscriptionPlanService), supaya tampilan checkout tidak lagi
+                // mengunci pengguna Standard yang sedang meng-upgrade ke Premium.
+                $checkoutUser = auth()->user();
+                $planService = app(\App\Services\SubscriptionPlanService::class);
+                $isUpgradeCheckout = $planService->isUpgrade($checkoutUser, $plan);
+                $currentActivePlan = $planService->activePlan($checkoutUser);
+                $blockedByActivePlan = $currentActivePlan !== null && !$isUpgradeCheckout;
+            @endphp
+
+            <!-- Upgrade Notice -->
+            @if($isUpgradeCheckout)
+            <div class="alert alert-info alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <i class="fas fa-arrow-up" style="color: #1A76D1; font-size: 20px; margin-top: 2px;"></i>
+                    <div>
+                            <strong>Upgrade ke {{ ucfirst($plan) }}</strong><br>
+                            Anda sedang meng-upgrade dari paket {{ ucfirst($currentActivePlan) }}. Paket {{ ucfirst($currentActivePlan) }} tetap aktif sampai pembayaran upgrade disetujui admin, lalu otomatis digantikan paket {{ ucfirst($plan) }}.<br>
+                            <small>Paket saat ini berakhir: {{ $checkoutUser->subscription_expires_at ? $checkoutUser->subscription_expires_at->format('d M Y H:i') : 'Unknown' }} WIB</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            @elseif($blockedByActivePlan)
             <!-- Active Subscription Warning -->
-            @if(auth()->user() && auth()->user()->hasActiveSubscription())
             <div class="alert alert-warning alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: flex-start; gap: 12px;">
                     <i class="fas fa-exclamation-triangle" style="color: #f57c00; font-size: 20px; margin-top: 2px;"></i>
                     <div>
                             <strong>Notice</strong><br>
                             You already have an active subscription. A new subscription will activate after the current one ends.<br>
-                            <small>Subscription expires: {{ auth()->user()->subscription_expires_at ? auth()->user()->subscription_expires_at->format('d M Y H:i') : 'Unknown' }} WIB</small>
+                            <small>Subscription expires: {{ $checkoutUser->subscription_expires_at ? $checkoutUser->subscription_expires_at->format('d M Y H:i') : 'Unknown' }} WIB</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -130,9 +156,8 @@
                             <i class="fas fa-arrow-left"></i> Back
                     </button>
                     
-                    <a href="#" class="btn btn-teal choose-payment" onclick="openPaymentModal()">Pilih Metode Pembayaran  &nbsp; ›</a>
-                        <a href="#" class="btn btn-teal choose-payment" onclick="openPaymentModal()">Choose Payment Method  &nbsp; ›</a>
-                    
+                    <a href="#" class="btn btn-teal choose-payment" onclick="openPaymentModal()">Choose Payment Method  &nbsp; ›</a>
+
                     <!-- Selected Payment Method Display -->
                     <div id="selectedPaymentMethod" style="display: none; margin-bottom: 12px;">
                         <div class="selected-method-box">
@@ -141,8 +166,7 @@
                                     <img id="selectedPaymentIcon" src="" alt="" style="width: 24px; height: 24px;">
                                     <span id="selectedPaymentName" style="font-weight: 500;"></span>
                                 </div>
-                                <button type="button" onclick="openPaymentModal()" class="btn-change-method">Ubah</button>
-                                    <button type="button" onclick="openPaymentModal()" class="btn-change-method">Change</button>
+                                <button type="button" onclick="openPaymentModal()" class="btn-change-method">Change</button>
                             </div>
                         </div>
                     </div>
@@ -166,13 +190,15 @@
                     </div>
                     
                     <!-- Bayar Sekarang Button -->
-                    @if(auth()->user() && auth()->user()->hasActiveSubscription())
+                    {{-- Hanya paket yang sama / lebih rendah yang dikunci.
+                         Upgrade ke paket lebih tinggi tetap bisa dibayar. --}}
+                    @if($blockedByActivePlan)
                     <button id="bayarSekarangBtn" class="btn-bayar-sekarang" disabled style="opacity: 0.6; cursor: not-allowed;">
                             <i class="fas fa-lock me-2"></i>Active Subscription - Cannot Purchase
                     </button>
                     @else
                     <button id="bayarSekarangBtn" class="btn-bayar-sekarang" onclick="showPaymentConfirmation()" disabled>
-                            Pay Now
+                            {{ $isUpgradeCheckout ? 'Bayar Upgrade' : 'Pay Now' }}
                     </button>
                     @endif
                     
@@ -215,27 +241,8 @@
     </div>
 </div>
 
-<!-- Payment Confirmation Modal -->
-<div id="paymentConfirmationModal" class="payment-confirmation-modal">
-    <div class="confirmation-modal-content">
-        <div class="confirmation-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#28a745"/>
-            </svg>
-        </div>
-        <div class="confirmation-content">
-          <h3>Invoice Sent!</h3>
-          <p>The payment invoice has been sent to your email.</p>
-          <p>The invoice is also available in <strong>Purchase History</strong> for quick access.</p>
-          <p>Please check your email or purchase history to complete payment and confirmation.</p>
-          <p>Wait for a notification that the payment has been approved by admin.</p>
-        </div>
-        <div class="confirmation-actions">
-            <button class="btn btn-primary" onclick="closePaymentConfirmation()">OK, Mengerti</button>
-          <a href="{{ route('purchase-history') }}" class="btn btn-outline">View Purchase History</a>
-        </div>
-    </div>
-</div>
+{{-- Modal pembayaran QRIS (bersama dengan checkout course) --}}
+@include("partials.payment-modal")
 
 <!-- Cancel Purchase Confirmation Modal -->
 <div id="cancelPurchaseModal" class="payment-confirmation-modal">
@@ -327,8 +334,10 @@
         const nameSpan = document.getElementById('selectedPaymentName');
         const iconImg = document.getElementById('selectedPaymentIcon');
         
-        // Hide the choose payment button
-        document.querySelector('.choose-payment').style.display = 'none';
+        // Hide the choose payment button(s)
+        document.querySelectorAll('.choose-payment').forEach(function (el) {
+            el.style.display = 'none';
+        });
         
         // Show selected payment method
         selectedDiv.style.display = 'block';
@@ -400,29 +409,7 @@
         })
         .then(data => {
             if (data && data.success) {
-                // If invoice number returned, resolve invoice id first before showing modal
-                if (data.invoice_number) {
-                    fetch(`/api/invoice/by-number/${data.invoice_number}`)
-                        .then(res => res.json())
-                        .then(invoiceData => {
-                            if (invoiceData.success) {
-                                latestInvoiceId = invoiceData.invoice.id;
-                            }
-
-                            // Show confirmation modal after invoice lookup
-                            document.getElementById('paymentConfirmationModal').style.display = 'flex';
-                            document.body.style.overflow = 'hidden';
-                        })
-                        .catch(() => {
-                            // Even if lookup fails, still show modal
-                            document.getElementById('paymentConfirmationModal').style.display = 'flex';
-                            document.body.style.overflow = 'hidden';
-                        });
-                } else {
-                    // No invoice number, just show modal
-                    document.getElementById('paymentConfirmationModal').style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                }
+                openPaymentModalQris(data.payment);
             } else {
                 alert(data?.message || 'An error occurred while processing the payment.');
                 btn.disabled = false;
@@ -437,19 +424,15 @@
         });
     }
 
-    let latestInvoiceId = null;
-
-    function closePaymentConfirmation() {
-        document.getElementById('paymentConfirmationModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
-        
-        // Redirect to invoice if available, otherwise to subscription page
-        if (latestInvoiceId) {
-            window.location.href = '/invoice/' + latestInvoiceId;
-        } else {
-            window.location.href = '{{ route("subscription.page") }}';
-        }
-    }
+    /**
+     * Tujuan setelah modal pembayaran ditutup. openPaymentModalQris/
+     * closePaymentModalQris berada di assets/js/payment-modal.js.
+     */
+    window.onPaymentModalDone = function (payment) {
+        window.location.href = (payment && payment.invoice_url)
+            ? payment.invoice_url
+            : '{{ route("subscription.page") }}';
+    };
 
     // Close modal when clicking outside
     window.onclick = function(event) {
@@ -467,4 +450,7 @@
     });
 
 </script>
+
+{{-- Pengisi & kontrol modal pembayaran QRIS (bersama dengan checkout course) --}}
+<script src="{{ asset('assets/js/payment-modal.js') }}"></script>
 @endsection

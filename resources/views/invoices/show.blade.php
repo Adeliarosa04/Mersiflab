@@ -11,7 +11,7 @@
                         <small class="text-muted">{{ $invoice->invoice_number }}</small>
                     </h4>
                     <div>
-                        <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary btn-sm me-2">
+                        <a href="{{ back_url(route('invoices.index')) }}" class="btn btn-outline-secondary btn-sm me-2">
                             <i class="fas fa-arrow-left"></i> Back
                         </a>
                         @if($invoice->status === 'paid')

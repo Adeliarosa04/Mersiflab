@@ -17,7 +17,7 @@
         <a href="{{ route('admin.teachers.show', $teacher->id) }}" class="btn" style="background: #e3f2fd; color: #1976d2; border: 1px solid #90caf9; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
             <i class="fas fa-eye me-2"></i>View Detail
         </a>
-        <a href="{{ route('admin.teachers.index') }}" class="btn" style="background: #2F80ED; color: white; border: none; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+        <a href="{{ back_url(route('admin.teachers.index')) }}" class="btn" style="background: #2F80ED; color: white; border: none; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
             <i class="fas fa-arrow-left me-2"></i>Back to Teachers
         </a>
     </div>

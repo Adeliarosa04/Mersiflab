@@ -26,7 +26,9 @@
             <h3 style="margin: 0; color: #333; font-size: 16px; font-weight: 600;">Application List</h3>
         </div>
         <div>
-            <select class="form-select" id="statusFilter" style="width: auto; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px;">
+            {{-- padding-right diberi ruang untuk ikon panah bawaan .form-select,
+                 supaya label berangka seperti "Pending (12)" tidak menimpanya. --}}
+            <select class="form-select" id="statusFilter" style="width: auto; padding: 6px 36px 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px;">
                 <option value="">All Status</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>
                     Pending ({{ \App\Models\TeacherApplication::where('status', 'pending')->count() }})

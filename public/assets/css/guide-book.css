@@ -1,0 +1,430 @@
+/* ==========================================================================
+   Guide Book LMS — tombol pemicu & modal panduan penyusunan materi.
+
+   Dipakai di form unggah materi (dashboard admin maupun pengajar). Seluruh
+   selector diawali .guide-book- agar tidak menyentuh komponen lain, dan warna
+   mengikuti biru merek Mersif Lab yang sudah dipakai kedua dashboard.
+   ========================================================================== */
+
+.guide-book-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 9px 18px;
+    border: 1px solid #cfe2f7;
+    border-radius: 10px;
+
+    background: #eef5fd;
+    color: #1557a0;
+
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none;
+    white-space: nowrap;
+
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+}
+
+.guide-book-trigger:hover,
+.guide-book-trigger:focus-visible {
+    background: #1a76d1;
+    border-color: #1a76d1;
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 118, 209, 0.28);
+}
+
+.guide-book-trigger:focus-visible {
+    outline: 2px solid #1557a0;
+    outline-offset: 2px;
+}
+
+.guide-book-trigger:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(26, 118, 209, 0.22);
+}
+
+.guide-book-trigger-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Modal
+   Ditinggikan di atas z-index bawaan Bootstrap (1055) supaya tidak pernah
+   tertutup sidebar, header lengket, atau overlay milik halaman dashboard.
+   -------------------------------------------------------------------------- */
+
+.guide-book-modal {
+    z-index: 2000;
+}
+
+.guide-book-modal .modal-content {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15, 40, 80, 0.25);
+}
+
+.guide-book-modal .modal-header {
+    align-items: flex-start;
+    gap: 12px;
+
+    padding: 22px 24px;
+    border: none;
+    background: linear-gradient(135deg, #1f7ae0 0%, #1557a0 100%);
+    color: #fff;
+}
+
+.guide-book-modal-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+}
+
+.guide-book-modal-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    opacity: 0.88;
+}
+
+/* Tombol X: kotak sendiri agar tetap terbaca di atas header gelap. */
+.guide-book-close {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+}
+
+.guide-book-close:hover,
+.guide-book-close:focus-visible {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+.guide-book-close:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Isi panduan ------------------------------------------------------------ */
+
+.guide-book-modal .modal-body {
+    padding: 24px;
+    background: #fbfcfe;
+}
+
+.guide-book-section + .guide-book-section {
+    margin-top: 18px;
+}
+
+.guide-book-section {
+    padding: 18px 20px;
+    border: 1px solid #e6edf6;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(20, 50, 90, 0.05);
+}
+
+.guide-book-section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.guide-book-section-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #eef5fd;
+
+    font-size: 18px;
+    line-height: 1;
+}
+
+.guide-book-section-title {
+    margin: 0;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #1d2b3a;
+    line-height: 1.4;
+}
+
+.guide-book-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.guide-book-list li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #44546a;
+}
+
+.guide-book-list li::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: 4px;
+
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1a76d1;
+}
+
+.guide-book-list li + li {
+    border-top: 1px dashed #eef1f5;
+}
+
+.guide-book-list strong {
+    color: #1d2b3a;
+    font-weight: 600;
+}
+
+.guide-book-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+
+    margin-top: 14px;
+    padding: 11px 14px;
+    border-left: 3px solid #f0ad4e;
+    border-radius: 8px;
+    background: #fff9ec;
+
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: #6b5326;
+}
+
+.guide-book-modal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e9eef5;
+    background: #fff;
+}
+
+.guide-book-footer-hint {
+    margin: 0;
+    margin-right: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #7b8794;
+}
+
+/* Layar kecil ------------------------------------------------------------ */
+
+@media (max-width: 575.98px) {
+    .guide-book-trigger {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .guide-book-modal .modal-header,
+    .guide-book-modal .modal-body,
+    .guide-book-modal .modal-footer {
+        padding: 18px 16px;
+    }
+
+    .guide-book-section {
+        padding: 16px 14px;
+    }
+
+    .guide-book-modal-title {
+        font-size: 17px;
+    }
+
+    .guide-book-footer-hint {
+        display: none;
+    }
+}
+
+/* ============================================================
+   POSISI TENGAH, BACKDROP BLUR, DAN SCROLL
+   Proyek ini memakai Bootstrap, bukan Tailwind. Nilai di bawah
+   adalah padanan langsung dari kelas yang diminta:
+     fixed inset-0 z-50            -> bawaan .modal Bootstrap
+     flex items-center justify-center -> .modal-dialog-centered
+     bg-black/40 backdrop-blur-sm  -> aturan .modal-backdrop di bawah
+     max-h-[85vh] overflow-y-auto  -> .modal-body di bawah
+     p-4                           -> padding .modal-dialog
+   ============================================================ */
+
+/* Backdrop hanya diburamkan saat modal panduan yang terbuka, agar
+   modal lain (pembayaran, konfirmasi) tidak ikut berubah. */
+/* Efek dipasang pada ELEMEN OVERLAY TERLUAR (.modal), bukan pada
+   .modal-backdrop bawaan Bootstrap. Alasannya: .guide-book-modal
+   memakai z-index 2000 sedangkan backdrop tetap di 1050, sehingga
+   overlay transparan modal menutupi backdrop dan blur-nya tidak
+   pernah terlihat. Elemen .modal sendiri sudah fixed inset-0.
+
+   Padanan kelas Tailwind yang diminta:
+     bg-slate-900/50  -> rgba(15, 23, 42, 0.5)
+     backdrop-blur-md -> blur(12px)                                */
+body.guide-book-open .modal-backdrop {
+    /* Backdrop bawaan tidak dipakai lagi supaya peredupan tidak dobel. */
+    opacity: 0 !important;
+}
+
+/* Pastikan dialog benar-benar terpusat vertikal & horizontal. */
+.guide-book-modal .modal-dialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100% - 2rem);
+    margin: 1rem auto;
+    padding: 0 4px;
+}
+
+.guide-book-modal .modal-content {
+    width: 100%;
+    max-height: 85vh;
+}
+
+/* Isi panduan bergulir sendiri; header & footer tetap terlihat. */
+.guide-book-modal .modal-body {
+    max-height: 85vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* --- Kartu Tips: grid 2 kolom --- */
+.guide-book-tips-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 28px;
+}
+
+.guide-book-tips-grid .guide-book-list {
+    margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+    .guide-book-tips-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.guide-book-open .modal-backdrop.show {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+/* Overlay terluar: fixed inset-0 + peredupan + blur (Tailwind: bg-slate-900/50 backdrop-blur-md p-4) */
+.guide-book-modal {
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .guide-book-modal {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+/* ============================================================
+   FOOTER MODAL: TOMBOL KOMPAK & SEJAJAR VERTIKAL
+   Padanan kelas Tailwind yang diminta:
+     flex items-center justify-between pt-4 border-t mt-4
+       -> aturan .modal-footer di bawah
+     px-4 py-1.5 text-sm font-medium rounded-lg bg-blue-600
+     text-white hover:bg-blue-700 transition
+       -> aturan .guide-book-confirm di bawah
+   ============================================================ */
+.guide-book-modal .modal-footer {
+    display: flex;
+    align-items: center;          /* items-center: catatan & tombol satu garis */
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 16px;
+    padding: 14px 24px;
+}
+
+/* Catatan kiri: text-xs text-gray-500, boleh menyusut agar tombol utuh. */
+.guide-book-footer-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Tombol kanan: kompak, tidak ikut menyusut. */
+.guide-book-modal .modal-footer .guide-book-confirm {
+    flex: 0 0 auto;
+    padding: 6px 16px;            /* px-4 py-1.5 */
+    font-size: 14px;              /* text-sm */
+    font-weight: 500;             /* font-medium */
+    line-height: 1.5;
+    border-radius: 8px;           /* rounded-lg */
+    background-color: #2563eb;    /* bg-blue-600 */
+    border-color: #2563eb;
+    color: #fff;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.guide-book-modal .modal-footer .guide-book-confirm:hover,
+.guide-book-modal .modal-footer .guide-book-confirm:focus {
+    background-color: #1d4ed8;    /* hover:bg-blue-700 */
+    border-color: #1d4ed8;
+    color: #fff;
+}
+
+/* Layar sempit: footer menumpuk agar tombol tidak terhimpit. */
+@media (max-width: 576px) {
+    .guide-book-modal .modal-footer {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .guide-book-modal .modal-footer .guide-book-confirm {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .guide-book-modal .modal-footer .guide-book-confirm { transition: none; }
+}

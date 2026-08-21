@@ -10,7 +10,7 @@
 <div class="card-content">
     <div class="card-content-title">
         <span>Edit Category: {{ $category->name }}</span>
-        <a href="{{ route('admin.categories.index') }}" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
+        <a href="{{ back_url(route('admin.categories.index')) }}" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">
             <i class="fas fa-arrow-left me-1"></i>Back
         </a>
     </div>
@@ -69,7 +69,7 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2">
-            <a href="{{ route('admin.categories.index') }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ back_url(route('admin.categories.index')) }}" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save me-1"></i>Update Category
             </button>

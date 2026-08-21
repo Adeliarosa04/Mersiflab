@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Purchase;
 use App\Models\TeacherBalance;
+use App\Support\TeacherEarnings;
 use Illuminate\Console\Command;
 
 class UpdateTeacherBalances extends Command
@@ -67,26 +68,38 @@ class UpdateTeacherBalances extends Command
                     ]
                 );
 
-                // Calculate earnings
-                $earnings = $purchase->teacher_earning ?? $purchase->amount;
+                // Pendapatan yang diharapkan adalah nilai BERSIH setelah komisi.
+                //
+                // Sebelumnya baris ini memakai:
+                //     ->sum(\DB::raw('COALESCE(teacher_earning, amount)'))
+                // Kolom teacher_earning tidak pernah diisi, jadi COALESCE selalu
+                // jatuh ke `amount` - harga bruto - dan perintah ini justru ikut
+                // menulis angka sebelum potongan komisi ke tabel saldo.
+                $summary = TeacherEarnings::summaryFor($teacher->id);
+                $expectedEarnings = $summary['net'];
 
-                // Check if this purchase already contributed to balance
-                $currentEarnings = $balance->total_earnings;
-                $expectedEarnings = Purchase::where('status', 'success')
-                    ->whereHas('course', function ($q) use ($teacher) {
-                        $q->where('teacher_id', $teacher->id);
-                    })
-                    ->sum(\DB::raw('COALESCE(teacher_earning, amount)'));
+                // Dibandingkan dengan selisih, bukan "kurang dari", supaya saldo
+                // yang terlanjur kelebihan (bruto) ikut dikoreksi ke bawah.
+                if (abs((float) $balance->total_earnings - $expectedEarnings) >= 0.01) {
+                    $sebelum = (float) $balance->total_earnings;
 
-                // Only update if difference exists
-                if ($currentEarnings < $expectedEarnings) {
                     $balance->total_earnings = $expectedEarnings;
-                    $balance->balance = $expectedEarnings - $balance->total_withdrawn;
+
+                    // total_withdrawn tidak disentuh: histori penarikan yang sudah
+                    // diajukan/disetujui adalah catatan keuangan, bukan turunan.
+                    $balance->balance = max(0, $expectedEarnings - (float) $balance->total_withdrawn);
                     $balance->last_updated = now();
                     $balance->save();
                     $updated++;
 
-                    $this->line("Updated balance for teacher {$teacher->id} ({$teacher->name})");
+                    $this->line(sprintf(
+                        'Updated balance for teacher %d (%s): Rp%s -> Rp%s (komisi guru %s%%)',
+                        $teacher->id,
+                        $teacher->name,
+                        number_format($sebelum, 0, ',', '.'),
+                        number_format($expectedEarnings, 0, ',', '.'),
+                        rtrim(rtrim(number_format($summary['teacher_percentage'], 2, ',', '.'), '0'), ',')
+                    ));
                 }
             } catch (\Exception $e) {
                 $this->error("Error processing purchase {$purchase->id}: {$e->getMessage()}");

@@ -233,6 +233,11 @@
                     </h5>
                 </div>
                 <div class="card-body teacher-form-body">
+                    {{-- Panduan standar materi, dibuka sebelum berkas dipilih --}}
+                    <div class="d-flex justify-content-end mb-4">
+                        @include('partials.guide-book')
+                    </div>
+
                     <form action="{{ route('teacher.modules.store.video', $chapter) }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
@@ -310,7 +315,7 @@
                         </div>
 
                         <div class="d-flex gap-3 justify-content-end">
-                            <a href="{{ route('teacher.modules.create', $chapter) }}" class="btn btn-outline-secondary">
+                            <a href="{{ back_url(route('teacher.modules.create', $chapter)) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">

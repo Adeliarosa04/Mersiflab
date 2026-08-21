@@ -22,16 +22,19 @@
                                 <span class="title-icon">
                                     <i class="fas fa-book-open"></i>
                                 </span>
-                                Manage Content
+                                {{ __('Manage Content') }}
                             </h1>
                             <p class="page-subtitle">
-                                <i class="fas fa-sparkles me-2"></i>Organize and manage your learning materials
+                                <i class="fas fa-sparkles me-2"></i>{{ __('Organize and manage your learning materials') }}
                             </p>
                         </div>
-                        <a href="{{ route('teacher.classes.create') }}" class="btn btn-create-class">
-                            <span class="btn-icon"><i class="fas fa-plus"></i></span>
-                            <span class="btn-text">New Class</span>
-                        </a>
+                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                            @include('partials.guide-book')
+                            <a href="{{ route('teacher.classes.create') }}" class="btn btn-create-class">
+                                <span class="btn-icon"><i class="fas fa-plus"></i></span>
+                                <span class="btn-text">{{ __('New Class') }}</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -46,7 +49,7 @@
                                 </div>
                                 <div class="stat-body">
                                     <div class="stat-value">{{ $totalClasses ?? $classes->count() }}</div>
-                                    <div class="stat-label">Classes</div>
+                                    <div class="stat-label">{{ __('Classes') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -57,7 +60,7 @@
                                 </div>
                                 <div class="stat-body">
                                     <div class="stat-value">{{ $totalChapters ?? $classes->sum(function($c) { return $c->chapters->count(); }) }}</div>
-                                    <div class="stat-label">Chapters</div>
+                                    <div class="stat-label">{{ __('Chapters') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -68,7 +71,7 @@
                                 </div>
                                 <div class="stat-body">
                                     <div class="stat-value">{{ $totalModules ?? $classes->sum(function($c) { return $c->chapters->sum(function($ch) { return $ch->modules->count(); }); }) }}</div>
-                                    <div class="stat-label">Modules</div>
+                                    <div class="stat-label">{{ __('Modules') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -97,7 +100,7 @@
                     <div class="alert alert-warning-custom alert-dismissible fade show" role="alert">
                         <i class="fas fa-exclamation-circle me-3"></i>
                         <div class="flex-grow-1">
-                            <strong>Please fix the errors:</strong>
+                            <strong>{{ __('Please fix the errors:') }}</strong>
                             <ul class="mb-0 mt-2">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -127,7 +130,7 @@
                                                     $needsReApproval = $class->needsReApproval();
                                                 @endphp
                                                 <span class="badge-status {{ $class->status }}">
-                                                    <i class="fas fa-circle me-1"></i>{{ $statusLabel['text'] }}
+                                                    <i class="fas fa-circle me-1"></i>{{ __($statusLabel['text']) }}
                                                 </span>
                                                 @if($class->canRequestApproval())
                                                     <button type="button" class="btn btn-sm btn-primary request-approval-btn" 
@@ -135,13 +138,13 @@
                                                             data-bs-target="#requestApprovalModal{{ $class->id }}"
                                                             title="Request Approval">
                                                         <i class="fas fa-paper-plane me-1">@if($needsReApproval) <i class="fas fa-exclamation-triangle"></i> @endif</i>
-                                                        Request Approve
+                                                        {{ __('Request Approve') }}
                                                     </button>
                                                 @endif
                                                 @if($needsReApproval)
                                                     <div class="re-approval-notice">
                                                         <i class="fas fa-info-circle"></i>
-                                                        <small>Course has changes that need approval</small>
+                                                        <small>{{ __('Course has changes that need approval') }}</small>
                                                     </div>
                                                 @endif
                                             </div>
@@ -153,12 +156,12 @@
                                                     <ul class="dropdown-menu dropdown-menu-end">
                                                         <li>
                                                             <a class="dropdown-item" href="{{ route('course.detail', $class->id) }}" target="_blank">
-                                                                <i class="fas fa-eye me-2"></i>Preview
+                                                                <i class="fas fa-eye me-2"></i>{{ __('Preview') }}
                                                             </a>
                                                         </li>
                                                         <li>
                                                             <a class="dropdown-item" href="{{ route('teacher.classes.edit', $class) }}">
-                                                                <i class="fas fa-edit me-2"></i>Edit
+                                                                <i class="fas fa-edit me-2"></i>{{ __('Edit') }}
                                                             </a>
                                                         </li>
                                                         <li><hr class="dropdown-divider"></li>
@@ -167,7 +170,7 @@
                                                                 @csrf
                                                                 @method('DELETE')
                                                                 <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Delete this class and all its content?');">
-                                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                                    <i class="fas fa-trash me-2"></i>{{ __('Delete') }}
                                                                 </button>
                                                             </form>
                                                         </li>
@@ -198,7 +201,7 @@
                                                     <i class="fas fa-bookmark me-2"></i>Chapters
                                                 </h5>
                                                 <a href="{{ route('teacher.chapters.create', $class) }}" class="btn-add-chapter">
-                                                    <i class="fas fa-plus me-1"></i>Add
+                                                    <i class="fas fa-plus me-1"></i>{{ __('Add') }}
                                                 </a>
                                             </div>
                                             
@@ -231,13 +234,13 @@
                                                             @endif
                                                         </div>
                                                         <div class="chapter-actions">
-                                                            <a href="{{ route('teacher.chapters.edit', [$class, $chapter]) }}" class="btn-action edit" title="Edit">
+                                                            <a href="{{ route('teacher.chapters.edit', [$class, $chapter]) }}" class="btn-action edit" title="{{ __('Edit') }}">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
                                                             <form action="{{ route('teacher.chapters.destroy', [$class, $chapter]) }}" method="POST" style="display:inline;">
                                                                 @csrf
                                                                 @method('DELETE')
-                                                                <button type="submit" class="btn-action delete" title="Delete" onclick="return confirm('Delete this chapter and all modules?');">
+                                                                <button type="submit" class="btn-action delete" title="{{ __('Delete') }}" onclick="return confirm('Delete this chapter and all modules?');">
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
                                                             </form>
@@ -249,7 +252,7 @@
                                     @else
                                         <div class="empty-chapters">
                                             <i class="fas fa-bookmark"></i>
-                                            <p>No chapters yet</p>
+                                            <p>{{ __('No chapters yet') }}</p>
                                             <a href="{{ route('teacher.chapters.create', $class) }}" class="btn-add-first">
                                                 <i class="fas fa-plus me-1"></i>Create First
                                             </a>
@@ -264,11 +267,11 @@
                         <div class="empty-visual">
                             <i class="fas fa-inbox"></i>
                         </div>
-                        <h3 class="empty-title">No Classes Yet</h3>
-                        <p class="empty-text">Get started by creating your first class to organize learning materials</p>
+                        <h3 class="empty-title">{{ __('No Classes Yet') }}</h3>
+                        <p class="empty-text">{{ __('Get started by creating your first class to organize learning materials') }}</p>
                         <a href="{{ route('teacher.classes.create') }}" class="btn btn-create-class">
                             <span class="btn-icon"><i class="fas fa-plus"></i></span>
-                            <span class="btn-text">Create First Class</span>
+                            <span class="btn-text">{{ __('Create First Class') }}</span>
                         </a>
                     </div>
                 @endif
@@ -293,16 +296,16 @@
                         <div class="alert alert-{{ $class->status === 'published' ? 'warning' : 'info' }}">
                             <i class="fas fa-{{ $class->status === 'published' ? 'exclamation-triangle' : 'info-circle' }} me-2"></i>
                             @if($class->status === 'published')
-                                <strong>Request Re-approval for Changes:</strong><br>
-                                You have made changes to this published course. Admin needs to review and approve these changes before they become visible to students.
+                                <strong>{{ __('Request Re-approval for Changes:') }}</strong><br>
+                                {{ __('You have made changes to this published course. Admin needs to review and approve these changes before they become visible to students') }}.
                             @else
-                                <strong>Request Course Approval:</strong><br>
-                                Are you sure this course is ready for approval? Make sure all content is complete and properly formatted.
+                                <strong>{{ __('Request Course Approval:') }}</strong><br>
+                                {{ __('Are you sure this course is ready for approval? Make sure all content is complete and properly formatted.') }}
                             @endif
                         </div>
                         
                         <div class="course-summary">
-                            <h6><strong>Course Summary:</strong></h6>
+                            <h6><strong>{{ __('Course Summary:') }}</strong></h6>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-book me-2"></i><strong>{{ $class->name }}</strong></li>
                                 <li><i class="fas fa-list-ul me-2"></i>{{ $class->chapters->count() }} Chapters</li>
@@ -315,7 +318,7 @@
                         <p class="text-muted small mt-3">
                             <i class="fas fa-{{ $class->status === 'published' ? 'sync' : 'exclamation-triangle' }} me-1"></i>
                             @if($class->status === 'published')
-                                The course will remain published while changes are under review. Students won't see the new content until approved.
+                                {{ __("The course will remain published while changes are under review. Students won't see the new content until approved.") }}
                             @else
                                 Once submitted, the course will be reviewed by admin before being published.
                             @endif
@@ -323,12 +326,12 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Cancel
+                            <i class="fas fa-times me-2"></i>{{ __('Cancel') }}
                         </button>
                         <form action="{{ route('teacher.classes.request-approval', $class) }}" method="POST" style="display:inline;">
                             @csrf
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane me-2"></i>Yes, Request Approval
+                                <i class="fas fa-paper-plane me-2"></i>{{ __('Yes, Request Approval') }}
                             </button>
                         </form>
                     </div>

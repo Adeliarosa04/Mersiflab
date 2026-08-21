@@ -331,7 +331,7 @@
                                 <i class="fas fa-edit me-2"></i>Edit & Resubmit Application
                             </a>
                         @endif
-                        <a href="{{ route('profile') }}" class="btn btn-outline-secondary btn-lg">
+                        <a href="{{ back_url(route('profile')) }}" class="btn btn-outline-secondary btn-lg">
                             <i class="fas fa-arrow-left me-2"></i>Back to Profile
                         </a>
                     </div>

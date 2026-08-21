@@ -3,12 +3,26 @@
 @section('title', 'Finance Management')
 
 @section('content')
-<div class="main-content">
-    <!-- Sidebar -->
-    @include('teacher.partials.sidebar')
-    
-    <!-- Main Content Area -->
-    <div class="content-area">
+{{-- Struktur pembungkus disamakan dengan halaman Manage Content
+     (resources/views/teacher/manage-content.blade.php): grid 2 kolom
+     Bootstrap, sidebar di col-lg-3 (kiri) dan konten di col-lg-9 (kanan).
+
+     Sebelumnya halaman ini memakai <div class="main-content"> dan
+     <div class="content-area"> - kelas milik layouts/admin.blade.php, bukan
+     layouts/app. Di layout ini kedua kelas itu tidak punya arti grid apa pun,
+     sehingga sidebar dirender sebagai blok selebar penuh dan mendorong konten
+     keuangan ke bawah. --}}
+<section class="finance-management-page py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                @include('teacher.partials.sidebar')
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <div class="profile-content">
         <div class="page-header">
             <div class="page-title">
                 <h1>Finance Management</h1>
@@ -31,15 +45,23 @@
         @endif
                     
                     @php
-                        $totalRevenue = $recentPurchases ? $recentPurchases->sum('amount') : 0;
-                        $totalTransactions = $recentPurchases ? $recentPurchases->count() : 0;
-                        $successTransactions = $recentPurchases ? $recentPurchases->where('status', 'success')->count() : 0;
-                        $pendingTransactions = $recentPurchases ? $recentPurchases->where('status', 'pending')->count() : 0;
-                        $uniqueStudents = $recentPurchases ? $recentPurchases->where('status', 'success')->pluck('user_id')->unique()->count() : 0;
+                        // Catatan: $totalRevenue, $totalTransactions, $successTransactions,
+                        // $pendingTransactions, dan $uniqueStudents dulu dihitung di sini tetapi
+                        // tidak pernah ditampilkan di mana pun. Angkanya juga menyesatkan:
+                        // $recentPurchases dibatasi 10 baris terakhir, sehingga "total" itu
+                        // sebenarnya hanya total 10 transaksi terbaru. Semua kartu ringkasan
+                        // di bawah memakai $balance, yang hanya bertambah dari purchase
+                        // berstatus 'success'. Perhitungan mati itu dihapus agar tidak ada
+                        // lagi dua sumber angka pendapatan yang bisa berbeda.
                         $totalCourses = $courses ? $courses->count() : 0;
-                        $currentBalance = $balance ? $balance->balance : 0;
-                        $totalEarnings = $balance ? $balance->total_earnings : 0;
-                        $totalWithdrawn = $balance ? $balance->total_withdrawn : 0;
+
+                        // Angka keuangan berasal dari App\Support\TeacherEarnings, bukan dari
+                        // kolom teacher_balances. Baris di tabel itu terlanjur menyimpan nilai
+                        // BRUTO (100% harga kursus) karena bug lama, sehingga memakainya akan
+                        // menampilkan pendapatan sebelum potongan komisi aplikasi.
+                        $currentBalance = $earnings['available'];   // bersih - sudah ditarik
+                        $totalEarnings = $earnings['net'];          // sesudah komisi platform
+                        $totalWithdrawn = $earnings['withdrawn'];
                         $pendingEarnings = $balance ? $balance->pending_earnings : 0;
                     @endphp
                     

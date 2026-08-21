@@ -4,6 +4,8 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/cart-checkout.css') }}">
+{{-- Modal pembayaran QRIS, dipakai bersama dengan checkout subscription. --}}
+<link rel="stylesheet" href="{{ asset('assets/css/payment-modal.css') }}">
 @endsection
 
 @section('content')
@@ -215,27 +217,8 @@
     </div>
 </div>
 
-<!-- Payment Confirmation Modal -->
-<div id="paymentConfirmationModal" class="payment-confirmation-modal">
-    <div class="confirmation-modal-content">
-        <div class="confirmation-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#28a745"/>
-            </svg>
-        </div>
-        <div class="confirmation-content">
-            <h3>Invoice Terkirim!</h3>
-            <p>Invoice pembayaran telah dikirim ke email Anda.</p>
-            <p>Invoice juga tersedia di <strong>Purchase History</strong> untuk akses langsung.</p>
-            <p>Silakan cek email atau purchase history untuk melakukan pembayaran dan konfirmasi.</p>
-            <p>Tunggu notifikasi bahwa pembayaran telah disetujui oleh admin.</p>
-        </div>
-        <div class="confirmation-actions">
-            <button class="btn btn-primary" onclick="closePaymentConfirmation()">OK, Mengerti</button>
-            <a href="{{ route('purchase-history') }}" class="btn btn-outline">Lihat Riwayat Pembelian</a>
-        </div>
-    </div>
-</div>
+{{-- Modal pembayaran QRIS (bersama dengan checkout subscription) --}}
+@include("partials.payment-modal")
 
 <!-- Cancel Purchase Confirmation Modal -->
 <div id="cancelPurchaseModal" class="payment-confirmation-modal">
@@ -369,7 +352,9 @@
         const iconImg = document.getElementById('selectedPaymentIcon');
         
         // Hide the choose payment button
-        document.querySelector('.choose-payment').style.display = 'none';
+        document.querySelectorAll('.choose-payment').forEach(function (el) {
+            el.style.display = 'none';
+        });
         
         // Show selected payment method
         selectedDiv.style.display = 'block';
@@ -438,21 +423,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Store invoice ID for redirect
-                if (data.invoice_number) {
-                    // Find invoice by invoice number
-                    fetch(`/api/invoice/by-number/${data.invoice_number}`)
-                        .then(res => res.json())
-                        .then(invoiceData => {
-                            if (invoiceData.success) {
-                                latestInvoiceId = invoiceData.invoice.id;
-                            }
-                        });
-                }
-                
-                // Show confirmation modal
-                document.getElementById('paymentConfirmationModal').style.display = 'flex';
-                document.body.style.overflow = 'hidden';
+                openPaymentModalQris(data.payment);
             } else {
                 alert(data.message || 'Terjadi kesalahan saat memproses pembayaran.');
                 btn.disabled = false;
@@ -467,19 +438,15 @@
         });
     }
 
-    let latestInvoiceId = null;
-
-    function closePaymentConfirmation() {
-        document.getElementById('paymentConfirmationModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
-        
-        // Redirect to invoice if available, otherwise to courses page
-        if (latestInvoiceId) {
-            window.location.href = '/invoice/' + latestInvoiceId;
-        } else {
-            window.location.href = '{{ route('courses') }}';
-        }
-    }
+    /**
+     * Tujuan setelah modal pembayaran ditutup. openPaymentModalQris/
+     * closePaymentModalQris berada di assets/js/payment-modal.js.
+     */
+    window.onPaymentModalDone = function (payment) {
+        window.location.href = (payment && payment.invoice_url)
+            ? payment.invoice_url
+            : '{{ route('courses') }}';
+    };
 
     // Close modal when clicking outside
     window.onclick = function(event) {
@@ -497,4 +464,7 @@
     });
 
 </script>
+
+{{-- Pengisi & kontrol modal pembayaran QRIS (bersama dengan checkout subscription) --}}
+<script src="{{ asset('assets/js/payment-modal.js') }}"></script>
 @endsection

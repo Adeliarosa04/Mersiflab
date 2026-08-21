@@ -4,6 +4,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/courses.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/free-class.css') }}">
 @endsection
 
 @section('content')
@@ -14,6 +15,9 @@
             <h1 class="page-title">Explore Courses</h1>
             <p class="page-subtitle">Discover and learn from our wide range of courses</p>
         </div>
+
+        <!-- Free Course Section (admin-managed, hidden when empty) -->
+        @include('partials.free-class-section')
 
         <!-- Most Popular Courses Section -->
         <section class="popular-section mb-5">
@@ -347,13 +351,28 @@
         <!-- All Courses Section with Filters -->
         <section id="all-courses" class="all-courses-section">
             <div class="section-header">
-                <h2 class="section-title">All Courses</h2>
+                <h2 class="section-title">
+                    {{ request()->filled('search') ? 'Search Results' : 'All Courses' }}
+                </h2>
+                @if(request()->filled('search'))
+                <p class="search-result-summary">
+                    {{ $courses->total() }} {{ \Illuminate\Support\Str::plural('course', $courses->total()) }} for
+                    <strong>"{{ request('search') }}"</strong>
+                    <a href="{{ route('courses') }}#all-courses" class="search-result-clear">
+                        <i class="fas fa-xmark"></i> Clear search
+                    </a>
+                </p>
+                @endif
             </div>
 
             <div class="row">
                 <!-- Filters Sidebar - STICKY -->
                 <div class="col-lg-3 filters-sticky">
                     <form method="GET" action="{{ route('courses') }}#all-courses" id="filterForm">
+                        {{-- Keep the keyword from the homepage search bar when filters are applied --}}
+                        @if(request()->filled('search'))
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        @endif
                         <div class="filters-card">
                             <h5 class="filters-title">Filters</h5>
 
@@ -459,7 +478,7 @@
                                     <span>Apply Filters</span>
                                 </button>
                                 
-                                @if(request()->hasAny(['category', 'rating', 'price_min', 'price_max']))
+                                @if(request()->hasAny(['search', 'category', 'rating', 'price_min', 'price_max']))
                                 <a href="{{ route('courses') }}#all-courses" class="btn-clear-filters">
                                     <i class="fas fa-rotate-left"></i>
                                     <span>Clear All</span>
@@ -680,6 +699,15 @@
                             </ul>
                         </nav>
                         @endif
+                    @elseif(request()->filled('search'))
+                        <div class="text-center py-5">
+                            <i class="fas fa-magnifying-glass fa-5x text-muted mb-3"></i>
+                            <h5>No courses match "{{ request('search') }}"</h5>
+                            <p class="text-muted">Try a different keyword, or browse the full catalogue.</p>
+                            <a href="{{ route('courses') }}#all-courses" class="btn btn-primary mt-3">
+                                View All Courses
+                            </a>
+                        </div>
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-book-open fa-5x text-muted mb-3"></i>

@@ -1117,3 +1117,27 @@
         font-size: 0.85rem;
     }
 }
+/* ============================================================
+   SOROTAN KARTU COURSE SAAT KEMBALI DARI DETAIL COURSE
+   Muncul sebentar ketika siswa menekan "Kembali ke My Course",
+   supaya jelas ia mendarat di course yang tadi dibuka.
+   Memakai palet Mersif Lab yang sudah ada: #1A76D1 primary.
+   ============================================================ */
+.course-card-restored {
+    border-color: #1A76D1 !important;
+    box-shadow: 0 0 0 4px rgba(26, 118, 209, 0.15);
+    animation: courseCardRestored 2.4s ease-out;
+}
+
+@keyframes courseCardRestored {
+    0%   { box-shadow: 0 0 0 0 rgba(26, 118, 209, 0.45); }
+    35%  { box-shadow: 0 0 0 8px rgba(26, 118, 209, 0.18); }
+    100% { box-shadow: 0 0 0 4px rgba(26, 118, 209, 0.15); }
+}
+
+/* Hormati preferensi pengguna yang mematikan animasi. */
+@media (prefers-reduced-motion: reduce) {
+    .course-card-restored {
+        animation: none;
+    }
+}

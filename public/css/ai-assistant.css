@@ -686,3 +686,54 @@
 .ai-chat-body::-webkit-scrollbar-thumb:hover {
     background: #0077b6;
 }
+/* ============================================
+   CTA "Daftar / Login untuk Lanjut Chatting"
+   Muncul saat kuota pesan tamu habis.
+   Memakai palet warna Mersif Lab yang sudah ada
+   (#1A76D1 primary, #D7EBFF hover) agar tampilan
+   widget tetap konsisten.
+   ============================================ */
+.ai-cta {
+    background: #f8f9fa;
+    border: 1px solid #D7EBFF;
+    border-left: 3px solid #1A76D1;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 4px;
+}
+
+.ai-cta-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1A76D1;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.ai-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Tombol CTA memakai class .ai-suggestion-btn yang sudah ada, jadi di sini
+   hanya perlu penyesuaian agar tampil sebagai anchor sejajar. */
+.ai-cta-btn {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+    flex: 1 1 auto;
+    min-width: 120px;
+}
+
+.ai-cta-btn:first-child {
+    background: #1A76D1;
+    border-color: #1A76D1;
+    color: #ffffff;
+}
+
+.ai-cta-btn:first-child:hover {
+    background: #0077b6;
+    border-color: #0077b6;
+    color: #ffffff;
+}

@@ -1,0 +1,1254 @@
+/* ==========================================================================
+   Free Class
+
+   Dipakai oleh:
+     - partials/free-class-section.blade.php  (kartu di halaman Courses)
+     - free-classes/show.blade.php            (halaman detail)
+
+   Semua selector diawali .free-class-* sehingga tidak menimpa gaya komponen
+   lain. Warna mengikuti palet MersifLab (#1A76D1).
+   ========================================================================== */
+
+.free-class-section {
+    animation: fadeIn 0.8s ease;
+}
+
+.free-class-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #1A76D1;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.section-title .free-class-badge {
+    margin-left: 10px;
+}
+
+.free-class-subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Kartu minimalis — hanya thumbnail + judul
+   ========================================================================== */
+
+.free-class-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.free-class-card:hover,
+.free-class-card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba(26, 118, 209, 0.14);
+    border-color: #1A76D1;
+    text-decoration: none;
+}
+
+.free-class-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: #eef2f7;
+    overflow: hidden;
+}
+
+.free-class-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+}
+
+.free-class-card:hover .free-class-thumb img {
+    transform: scale(1.05);
+}
+
+/* Placeholder saat belum ada thumbnail maupun cover video */
+.free-class-thumb-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1A76D1 0%, #4A9EE0 100%);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.free-class-thumb-placeholder i {
+    font-size: 2.4rem;
+}
+
+.free-class-thumb-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.78);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.free-class-body {
+    padding: 14px 16px 16px;
+}
+
+.free-class-title {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.45;
+
+    /* Jaga tinggi kartu tetap seragam untuk judul panjang */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.free-class-card:hover .free-class-title {
+    color: #1A76D1;
+}
+
+/* ==========================================================================
+   Halaman detail
+   ========================================================================== */
+
+.free-class-detail-page {
+    padding: 28px 0 60px;
+}
+
+.free-class-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    color: #6b7280;
+}
+
+.free-class-breadcrumb a {
+    color: #1A76D1;
+    text-decoration: none;
+}
+
+.free-class-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.free-class-breadcrumb i {
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+/* Player ----------------------------------------------------------------- */
+
+.free-class-player {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0f172a;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.free-class-player iframe,
+.free-class-player video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    object-fit: contain;
+    background: #0f172a;
+}
+
+.free-class-player-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.free-class-player-empty i {
+    font-size: 2rem;
+}
+
+.free-class-player-empty--standalone {
+    position: static;
+    min-height: 220px;
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+}
+
+/* Judul & deskripsi ------------------------------------------------------ */
+
+.free-class-head {
+    margin-bottom: 26px;
+}
+
+.free-class-detail-body {
+    padding: 22px 2px 0;
+}
+
+.free-class-detail-title {
+    margin: 12px 0 14px;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.3;
+}
+
+.free-class-detail-desc {
+    color: #4b5563;
+    font-size: 1rem;
+    line-height: 1.8;
+    word-break: break-word;
+}
+
+/* Panel modul ------------------------------------------------------------ */
+
+.free-class-module {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 22px;
+    position: sticky;
+    top: 20px;
+}
+
+.free-class-module-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.free-class-module-title i {
+    color: #d32f2f;
+}
+
+.free-class-module-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    color: #4b5563;
+    font-size: 0.88rem;
+    word-break: break-all;
+}
+
+.free-class-module-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.free-class-module-empty {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.free-class-module-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+    width: 100%;
+    color: #6b7280;
+    font-size: 0.86rem;
+    text-decoration: none;
+}
+
+.free-class-module-back:hover {
+    color: #1A76D1;
+}
+
+/* Tombol ----------------------------------------------------------------- */
+
+.free-class-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.free-class-btn i {
+    font-size: 0.85rem;
+}
+
+.free-class-btn-primary {
+    background: #1A76D1;
+    color: #fff;
+    border: 1px solid #1A76D1;
+}
+
+.free-class-btn-primary:hover {
+    background: #155fa8;
+    border-color: #155fa8;
+    color: #fff;
+}
+
+.free-class-btn-outline {
+    background: transparent;
+    color: #1A76D1;
+    border: 1px solid #1A76D1;
+}
+
+.free-class-btn-outline:hover {
+    background: #eff6ff;
+    color: #155fa8;
+}
+
+/* ==========================================================================
+   Navigasi level (tabs)
+   ========================================================================== */
+
+.free-class-levels-nav {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 20px;
+    position: sticky;
+    top: 20px;
+}
+
+.free-class-levels-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.free-class-levels-title i {
+    color: #1A76D1;
+}
+
+.free-class-levels-count {
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1A76D1;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.free-class-level-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.free-class-level-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out,
+                border-color 0.3s ease-in-out,
+                transform 0.3s ease-in-out;
+}
+
+.free-class-level-tab:hover {
+    background: #eff6ff;
+    transform: translateX(2px);
+}
+
+.free-class-level-tab.is-active {
+    background: #eff6ff;
+    border-color: #1A76D1;
+}
+
+.free-class-level-index {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+.free-class-level-tab.is-active .free-class-level-index {
+    background: #1A76D1;
+    color: #fff;
+}
+
+.free-class-level-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.free-class-level-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.free-class-level-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.free-class-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+/* Panel isi level -------------------------------------------------------- */
+
+.free-class-level-panel[hidden] {
+    display: none;
+}
+
+.free-class-level-body {
+    padding-top: 20px;
+}
+
+.free-class-level-heading {
+    margin: 0 0 16px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* Daftar materi unduhan -------------------------------------------------- */
+
+.free-class-materials {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Kartu materi: sisi kiri informasi, sisi kanan kelompok tombol.
+   Struktur identik untuk PDF maupun PPT agar keduanya sejajar rapi. */
+.free-class-material {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 18px 20px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+/* --- Sisi kiri: ikon + judul + nama berkas --- */
+.free-class-material-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    flex: 1 1 240px;
+}
+
+.free-class-material-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.free-class-material-icon i {
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.free-class-material-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.free-class-material-text strong {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.4;
+}
+
+.free-class-material-file {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.5;
+
+    /* Nama berkas panjang dipotong agar tidak mendorong tombol turun. */
+    display: block;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Sisi kanan: kelompok tombol --- */
+.free-class-material-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* Lebar tombol disamakan supaya tepiannya lurus antar kartu. */
+.free-class-material-actions .free-class-btn {
+    min-width: 132px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   Modal pratinjau materi (PDF & PPT)
+   ========================================================================== */
+
+.free-class-preview-modal {
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.free-class-preview-modal .modal-header,
+.free-class-preview-modal .modal-footer {
+    border-color: #eef2f7;
+}
+
+.free-class-preview-modal .modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.free-class-preview-modal .modal-body {
+    padding: 0;
+}
+
+.free-class-preview-modal .modal-footer {
+    gap: 12px;
+}
+
+.free-class-preview-modal .modal-footer .free-class-btn {
+    min-width: 150px;
+    margin: 0;
+}
+
+.free-class-preview-frame {
+    position: relative;
+    width: 100%;
+    height: min(74vh, 720px);
+    background: #f1f5f9;
+}
+
+.free-class-preview-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
+/* Status: sedang memuat / gagal memuat. */
+.free-class-preview-status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    text-align: center;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    z-index: 2;
+}
+
+.free-class-preview-status[hidden] {
+    display: none;
+}
+
+.free-class-preview-status p {
+    max-width: 52ch;
+    margin: 0;
+}
+
+.free-class-preview-status--error i {
+    font-size: 1.8rem;
+    color: #94a3b8;
+}
+
+/* Spinner indikator proses */
+.free-class-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #1A76D1;
+    border-radius: 50%;
+    animation: free-class-spin 0.8s linear infinite;
+}
+
+@keyframes free-class-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .free-class-spinner {
+        animation-duration: 2s;
+    }
+}
+
+/* ==========================================================================
+   Penampil slide PPTX
+   ========================================================================== */
+
+.free-class-pptx-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.free-class-pptx-toolbar[hidden] {
+    display: none;
+}
+
+.free-class-pptx-nav,
+.free-class-pptx-zoom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.free-class-pptx-ctrl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #334155;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.free-class-pptx-ctrl:hover:not(:disabled) {
+    background: #eff6ff;
+    border-color: #1A76D1;
+    color: #1A76D1;
+}
+
+.free-class-pptx-ctrl:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.free-class-pptx-ctrl--text {
+    font-weight: 600;
+}
+
+.free-class-pptx-counter {
+    min-width: 132px;
+    text-align: center;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.free-class-pptx-zoom-level {
+    min-width: 52px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+/* Panggung tempat slide dirender */
+.free-class-pptx-stage {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12px;
+    background: #eef2f7;
+}
+
+.free-class-pptx-stage[hidden] {
+    display: none;
+}
+
+.free-class-pptx-viewer {
+    transform-origin: top center;
+    flex: 0 0 auto;
+}
+
+/* Slide hasil PPTXjs: beri latar putih dan bayangan agar terbaca sebagai
+   lembar presentasi. Selector dibatasi ke dalam penampil ini saja. */
+.free-class-pptx-viewer .slide {
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Pesan bawaan library disembunyikan; indikator sendiri yang dipakai. */
+.free-class-pptx-viewer .slides-loadnig-msg {
+    display: none !important;
+}
+
+/* Free Class lainnya ----------------------------------------------------- */
+
+.free-class-more {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.free-class-more-title {
+    margin: 0 0 20px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 991px) {
+    .free-class-module,
+    .free-class-levels-nav {
+        position: static;
+    }
+
+    /* Di layar kecil daftar level tampil lebih dulu, baru player. */
+    .free-class-levels-nav {
+        margin-bottom: 4px;
+    }
+}
+
+@media (max-width: 767px) {
+    .free-class-detail-page {
+        padding: 18px 0 40px;
+    }
+
+    .free-class-detail-title {
+        font-size: 1.35rem;
+    }
+
+    .free-class-detail-desc {
+        font-size: 0.95rem;
+    }
+
+    .free-class-module-actions {
+        flex-direction: column;
+    }
+
+    .free-class-body {
+        padding: 12px 14px 14px;
+    }
+
+    .free-class-title {
+        font-size: 0.92rem;
+    }
+
+    .section-title .free-class-badge {
+        margin-left: 8px;
+        font-size: 0.66rem;
+    }
+
+    .free-class-more {
+        margin-top: 34px;
+        padding-top: 24px;
+    }
+
+    .free-class-levels-nav {
+        padding: 16px;
+    }
+
+    .free-class-material {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+    }
+
+    /* Saat menumpuk, blok info tidak boleh ikut melar mengisi sisa tinggi. */
+    .free-class-material-info {
+        flex: 0 0 auto;
+    }
+
+    /* Di layar sempit tombol menumpuk dan melebar penuh, tetap sejajar. */
+    .free-class-material-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .free-class-material-actions .free-class-btn {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .free-class-material-file {
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-all;
+    }
+
+    .free-class-preview-frame {
+        height: 60vh;
+    }
+
+    .free-class-preview-modal .modal-footer {
+        flex-direction: column;
+    }
+
+    .free-class-preview-modal .modal-footer .free-class-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .free-class-level-heading {
+        font-size: 1.05rem;
+    }
+}
+
+/* ============================================================
+   BANNER BIRU HALAMAN DETAIL FREE COURSE
+   Nilai warna, radius, padding, dan gaya tombol disalin dari
+   header halaman modul course reguler (public/css/module.css
+   bagian .fullscreen-header) supaya tampilannya identik.
+   ============================================================ */
+.free-course-banner {
+    background: linear-gradient(180deg, #1e88e5 0%, #1565c0 100%);
+    padding: 1.25rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+.free-course-banner-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.free-course-banner-info {
+    flex: 1;
+    min-width: 250px;
+}
+
+.free-course-banner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 0.6rem;
+}
+
+.free-course-banner-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.free-course-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.free-course-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    max-width: 300px;
+}
+
+.free-course-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4fc3f7 0%, #29b6f6 100%);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(79, 195, 247, 0.4);
+}
+
+.free-course-progress-text {
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.btn-detail-level {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.btn-detail-level:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 576px) {
+    .free-course-banner {
+        padding: 1rem 1.25rem;
+    }
+
+    .free-course-banner-title {
+        font-size: 1.2rem;
+    }
+
+    .btn-detail-level {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .free-course-progress-fill,
+    .btn-detail-level {
+        transition: none;
+    }
+
+    .btn-detail-level:hover {
+        transform: none;
+    }
+}
+
+/* ---- Progres per level (Free Course) ---- */
+.free-course-progress-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.free-class-level-headrow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.free-course-level-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #2e7d32;
+    background: #e8f5e8;
+    border-radius: 20px;
+    padding: 3px 10px;
+    vertical-align: middle;
+}
+
+.free-course-complete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #1e88e5;
+    color: #ffffff;
+    border: 1px solid #1e88e5;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.free-course-complete-btn:hover {
+    background: #1565c0;
+    border-color: #1565c0;
+}
+
+.free-course-complete-btn.is-done {
+    background: #ffffff;
+    color: #6c757d;
+    border-color: #d7dee6;
+}
+
+.free-course-complete-btn.is-done:hover {
+    background: #f4f6f9;
+    color: #495057;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .free-course-complete-btn { transition: none; }
+}
+
+/* ============================================================
+   UKURAN MODAL PRATINJAU MENURUT JENIS BERKAS
+   Kelas .is-ppt / .is-pdf dipasang oleh free-class-preview.js
+   saat tombol "Lihat" ditekan.
+
+   Catatan: proyek ini memakai Bootstrap, bukan Tailwind. Nilai
+   di bawah adalah padanan langsungnya:
+     max-w-7xl   -> max-width: 1280px
+     aspect-video-> aspect-ratio: 16 / 9
+     h-[80vh]    -> max-height: 80vh
+   ============================================================ */
+
+/* --- PPT: kotak mengikuti rasio slide asli --- */
+
+/* Dialog memakai lebar kotak yang sama, bukan lebar modal-xl. Kalau dialog
+   dibiarkan selalu 1140px sementara kotaknya lebih sempit, selisihnya muncul
+   sebagai pita abu-abu di kiri-kanan - persis keluhan yang diperbaiki di sini.
+
+   Nilainya diambil dari custom property yang sama dengan .free-class-preview-frame
+   (diwarisi dari #materialPreviewModal), jadi keduanya mustahil berselisih. */
+#materialPreviewModal.is-ppt .modal-dialog {
+    width: var(--preview-w, 960px);
+    max-width: 90vw;
+}
+
+/* Judul bisa panjang ("Slide Presentasi — nama-berkas-yang-panjang.pptx").
+   Dengan lebar dialog yang kini pasti, judul harus boleh membungkus agar tidak
+   mendorong lebar modal melebihi kotak slide. */
+#materialPreviewModal.is-ppt .modal-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Batas tinggi modal & perilaku gulir panggung diatur sekali saja di blok
+   "PERBAIKAN POSISI SLIDE" di bagian bawah berkas ini - blok itu memang
+   dimuat belakangan sehingga selalu menang. */
+
+/* Ukuran kotak ditulis free-class-preview.js sebagai custom property, hasil
+   rasio slide asli dikali ruang yang benar-benar tersisa. Nilai cadangan 16:9
+   hanya dipakai pada momen sebelum slide pertama selesai diukur. */
+#materialPreviewModal.is-ppt .free-class-preview-frame {
+    width: var(--preview-w, 960px);
+    height: var(--preview-h, 564px);
+    max-width: 100%;
+    max-height: none;
+    min-height: 0;
+    aspect-ratio: auto;
+}
+
+#materialPreviewModal.is-ppt .free-class-pptx-stage {
+    align-items: center;
+}
+
+/* --- PDF: pertahankan potret A4 seperti sebelumnya --- */
+#materialPreviewModal.is-pdf .modal-dialog {
+    max-width: min(1140px, 94vw);
+}
+
+#materialPreviewModal.is-pdf .free-class-preview-frame {
+    height: min(74vh, 720px);
+    aspect-ratio: auto;
+}
+
+/* Layar sempit.
+
+   Pemaksaan tinggi tetap untuk .is-ppt sengaja DIHAPUS. Dulu itu perlu karena
+   kotak memakai aspect-ratio yang dihitung dari lebar, sehingga di layar
+   sempit hasilnya jadi terlalu pendek. Sekarang layoutStage() sudah menangani
+   kasus ini sendiri: bila lebar hasil rasio melebihi ruang yang ada, lebarnya
+   yang dipakai dan tingginya diturunkan dari situ. Menimpa tinggi di sini
+   justru merusak rasio dan memunculkan lagi pita kosong di kiri-kanan. */
+@media (max-width: 768px) {
+    #materialPreviewModal.is-pdf .modal-dialog {
+        max-width: 100%;
+    }
+}
+
+/* ============================================================
+   PERBAIKAN POSISI SLIDE DI DALAM MODAL PPT
+   Gejala sebelumnya: slide terdorong ke atas / terpotong dan
+   ada ruang kosong berlebih di bawah.
+
+   Penyebabnya dua hal yang saling menguatkan:
+     1. transform-origin: top center  -> slide diskalakan dari
+        sisi atas, bukan dari titik yang sama dengan kotaknya.
+     2. Kotak viewer diberi ukuran ASLI slide (lihat applyZoom
+        di free-class-preview.js), padahal transform scale()
+        tidak mengubah ukuran kotak layout.
+
+   Sekarang origin dipindah ke top left dan kotaknya berukuran
+   hasil skala, sehingga flex bisa memusatkannya secara simetris.
+   ============================================================ */
+.free-class-pptx-viewer {
+    transform-origin: top left;
+}
+
+/* Panggung: slide selalu di tengah, horizontal maupun vertikal.
+
+   overflow: hidden - BUKAN auto. Kotak pratinjau sekarang berukuran persis
+   rasio slide dan skala fit dihitung dari min(lebar, tinggi) panggung, jadi
+   saat fit seluruh slide dijamin muat. overflow: auto yang lama justru
+   memunculkan scrollbar vertikal padahal tidak ada yang perlu digulir.
+
+   padding 12px harus sama dengan STAGE_PADDING (24 = 12 x 2) di
+   free-class-preview.js; kalau berbeda, skala fit meleset sedikit dan
+   scrollbar bisa muncul lagi. */
+#materialPreviewModal.is-ppt .free-class-pptx-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 12px;
+}
+
+/* Barulah saat pengguna memperbesar melampaui skala fit panggung boleh
+   digulir. Kelas ini dipasang applyZoom() sesuai state.fitted. */
+#materialPreviewModal.is-ppt .free-class-pptx-stage.is-zoomed {
+    overflow: auto;
+}
+
+/* Buang margin bawaan PPTXjs yang menggeser posisi vertikal slide. */
+#materialPreviewModal .free-class-pptx-viewer .slides,
+#materialPreviewModal .free-class-pptx-viewer .slide {
+    margin: 0 !important;
+}
+
+/* Toolbar navigasi & zoom menempel di atas, tidak ikut menggulir
+   sehingga tidak pernah mendorong slide keluar area tampil. */
+#materialPreviewModal .free-class-pptx-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    flex: 0 0 auto;
+}
+
+/* Modal tetap satu kolom: header -> toolbar -> panggung slide.
+
+   85vh (bukan 92vh) adalah batas SELURUH modal - header, toolbar, dan footer
+   ikut di dalamnya. Nilai yang sama dipakai MAX_VIEWPORT_H di
+   free-class-preview.js saat menghitung --preview-h, sehingga tinggi kotak
+   tidak pernah melampaui apa yang diizinkan CSS dan scrollbar kedua tidak
+   pernah terbentuk. */
+#materialPreviewModal.is-ppt .modal-content {
+    max-height: 85vh;
+    overflow: hidden;
+}
+
+#materialPreviewModal.is-ppt .modal-body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}

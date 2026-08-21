@@ -78,7 +78,7 @@
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
                             <label class="form-check-label" for="terms">
-                                I agree to the <a href="{{ url('/syarat-ketentuan') }}" target="_blank">Terms & Conditions</a> and <a href="{{ url('/privacy-policy') }}" target="_blank">Privacy Policy</a>
+                                I agree to the <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms & Conditions</a> and <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>
                             </label>
                         </div>
                         
@@ -88,7 +88,7 @@
                             <span>Or sign up with</span>
                         </div>
                         
-                        <button type="button" class="btn btn-outline-secondary w-100 google-btn mb-3" onclick="window.location.href='{{ route('auth.google') }}'">
+                        <button type="button" class="btn btn-outline-secondary w-100 google-btn mb-3" data-href="{{ route('auth.google') }}" aria-busy="false">
                             <img src="https://www.google.com/favicon.ico" alt="Google" width="20" class="me-2">
                             Sign up with Google
                         </button>
@@ -142,8 +142,31 @@
             if (password !== passwordConfirm) {
                 e.preventDefault();
                 alert('Password and Confirm Password do not match!');
+                return;
+            }
+
+            // Loading state + cegah submit ganda saat request masih berjalan.
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.setAttribute('aria-busy', 'true');
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating account…';
             }
         });
     }
+
+    // Google OAuth button: navigasi di window yang sama + loading state,
+    // supaya cookie session ikut terkirim dan tidak terjadi klik ganda.
+    document.querySelectorAll('.google-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const href = this.dataset.href;
+            if (!href) return;
+            this.setAttribute('disabled', 'disabled');
+            this.setAttribute('aria-busy', 'true');
+            this.classList.add('disabled');
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Signing in…';
+            location.assign(href);
+        }, { once: true });
+    });
 </script>
 @endsection

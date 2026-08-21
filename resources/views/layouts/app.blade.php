@@ -28,6 +28,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
     @yield('styles')
+
+    <!-- Lapisan penyempurnaan visual global (spacing, radius, shadow, tipografi).
+         Sengaja dimuat paling akhir agar dapat merapikan gaya halaman
+         tanpa mengubah berkas CSS yang sudah ada. -->
+    <link rel="stylesheet" href="{{ asset('assets/css/ui-refinements.css') }}">
 </head>
 <body>
     <!-- Sidebar Overlay -->

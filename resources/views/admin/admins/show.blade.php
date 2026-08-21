@@ -6,7 +6,7 @@
 <div class="page-title">
     <h1>Admin Details</h1>
     <div class="page-actions">
-        <a href="{{ route('admin.admins.index') }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
+        <a href="{{ back_url(route('admin.admins.index')) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
             <i class="fas fa-arrow-left"></i> Back to Admins
         </a>
         <a href="{{ route('admin.admins.edit', $admin->id) }}" class="btn btn-primary" style="background: #2F80ED; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">

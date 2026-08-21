@@ -26,7 +26,7 @@
 
 <!-- Back to Teachers Button -->
 <div style="margin-bottom: 20px; text-align: right;">
-    <a href="{{ route('admin.teachers.index') }}" 
+    <a href="{{ back_url(route('admin.teachers.index')) }}" 
        style="background: #6c757d; color: white; border: none; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap;"
        onmouseover="this.style.background='#545b62'; this.style.transform='translateY(-1px)';" 
        onmouseout="this.style.background='#6c757d'; this.style.transform='translateY(0)';">

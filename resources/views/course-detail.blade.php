@@ -7,10 +7,25 @@
 @endsection
 
 @section('content')
+{{-- Halaman detail HARUS terbuka dari paling atas.
+
+     Skrip ini sengaja inline & sinkron di awal konten, bukan di @section('scripts'),
+     karena browser memulihkan posisi gulir jauh sebelum DOMContentLoaded. Menunggu
+     event itu akan terlihat sebagai "lompatan" ke tengah lalu balik ke atas. --}}
+<script>
+    if ('scrollRestoration' in history) {
+        // Matikan pemulihan gulir bawaan browser: halaman ini selalu dibuka
+        // dari header, kecuali memang diminta melanjutkan modul lewat ?module=.
+        history.scrollRestoration = 'manual';
+    }
+</script>
 <div class="course-detail-page">
     <!-- Breadcrumb -->
     <div class="breadcrumb-section">
         <div class="container">
+            {{-- Tombol kembali (kiri) & tombol tutup (kanan) --}}
+            @include('partials.course-detail-back')
+
             <nav class="breadcrumb-nav">
                 <a href="{{ route('courses') }}"><i class="fas fa-home"></i> Courses</a>
                 <i class="fas fa-chevron-right"></i>
@@ -762,7 +777,13 @@
                                 }
                             }
                         @endphp
+                        {{-- data-chapter-id & data-module-ids dipakai untuk
+                             menemukan kembali chapter tempat modul terakhir
+                             yang dipelajari siswa, lalu menyorotinya. --}}
                         <div class="chapter-card {{ $isChapterClickable ? 'clickable' : '' }}"
+                             id="chapter-card-{{ $chapter->id }}"
+                             data-chapter-id="{{ $chapter->id }}"
+                             data-module-ids="{{ $approvedModulesInChapter->pluck('id')->implode(',') }}"
                              @if($isChapterClickable)
                              onclick="window.location.href='{{ $chapterClickUrl }}'"
                              style="cursor: pointer;"
@@ -1010,6 +1031,7 @@
 @section('scripts')
 {{-- SweetAlert2 CDN --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     // Auto-show subscription expired modal if redirected from module access
     document.addEventListener('DOMContentLoaded', function() {
@@ -1246,5 +1268,79 @@
             });
         });
     }
+</script>
+
+<script>
+/**
+ * Posisi gulir awal halaman detail course.
+ *
+ * Aturan dasar: halaman SELALU terbuka dari paling atas (header course).
+ *
+ * Satu-satunya pengecualian adalah permintaan eksplisit lewat query parameter
+ * ?module=ID, yang hanya dipasang tombol "Kembali ke Course" di halaman modul.
+ * Di situ siswa memang meminta dikembalikan ke tempat ia belajar.
+ *
+ * Sebelumnya skrip ini juga membaca sessionStorage 'mersif.lastModule.course.*'
+ * sebagai cadangan. Itulah sumber bug auto-scroll: penanda tersebut bertahan
+ * 12 jam, sehingga kunjungan BARU dari katalog pun ikut tergulir ke tengah
+ * halaman. Cadangan itu dihapus - niat "lanjutkan modul" harus datang dari
+ * tautannya, bukan ditebak dari riwayat.
+ *
+ * Hanya menggulir & menyorot; tidak mengubah tautan atau alur pembelajaran.
+ */
+(function () {
+    'use strict';
+
+    function findChapterCardByModule(moduleId) {
+        var cards = document.querySelectorAll('.chapter-card[data-module-ids]');
+
+        for (var i = 0; i < cards.length; i++) {
+            var ids = (cards[i].dataset.moduleIds || '')
+                .split(',')
+                .filter(function (id) { return id !== ''; });
+
+            if (ids.indexOf(String(moduleId)) !== -1) {
+                return cards[i];
+            }
+        }
+
+        return null;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var params = new URLSearchParams(window.location.search);
+        var moduleId = params.get('module');
+
+        // Tanpa permintaan eksplisit: pastikan viewport di paling atas.
+        // Hanya sekali saat pemuatan - gulir manual pengguna sesudahnya
+        // sama sekali tidak diganggu.
+        if (!moduleId) {
+            window.scrollTo(0, 0);
+            return;
+        }
+
+        var card = findChapterCardByModule(moduleId);
+
+        if (!card) {
+            window.scrollTo(0, 0);
+            return;
+        }
+
+        card.scrollIntoView({ block: 'center', behavior: 'auto' });
+
+        // Sorot sebentar supaya siswa langsung tahu sampai mana ia belajar.
+        card.classList.add('chapter-card-resumed');
+        window.setTimeout(function () {
+            card.classList.remove('chapter-card-resumed');
+        }, 2600);
+
+        // Rapikan URL supaya refresh berikutnya tidak menggulir lagi.
+        if (params.get('module') && window.history.replaceState) {
+            params.delete('module');
+            var query = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (query ? '?' + query : ''));
+        }
+    });
+})();
 </script>
 @endsection

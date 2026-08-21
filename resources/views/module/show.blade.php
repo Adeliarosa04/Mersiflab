@@ -19,7 +19,14 @@
 <div class="module-container">
     <!-- Sidebar Course Navigation -->
     <div class="module-sidebar" id="moduleSidebar">
-        <a href="{{ route('course.detail', $class->id) }}" class="back-to-course-link text-decoration-none mb-3 d-block">
+        {{-- Parameter ?module= membawa modul yang sedang dipelajari, supaya
+             halaman detail course langsung menyorot chapter tempat modul ini
+             berada - bukan mendarat di paling atas. --}}
+        <a href="{{ route('course.detail', $class->id) }}?module={{ $module->id }}"
+           class="back-to-course-link text-decoration-none mb-3 d-block"
+           data-last-module-id="{{ $module->id }}"
+           data-last-chapter-id="{{ $chapter->id }}"
+           data-course-id="{{ $class->id }}">
             <i class="fas fa-arrow-left"></i>
             <span>Kembali ke Course</span>
         </a>
@@ -1462,5 +1469,14 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Module page scripts loaded');
 });
 </script>
+
+{{-- Catatan: penanda sessionStorage 'mersif.lastModule.course.*' yang dulu
+     ditulis di sini sudah dihapus. Penanda itu bertahan 12 jam dan dibaca
+     halaman detail course sebagai cadangan pemulihan posisi, sehingga
+     kunjungan baru dari katalog ikut tergulir otomatis ke tengah halaman.
+
+     Pemulihan posisi kini sepenuhnya ditangani parameter ?module= pada tombol
+     "Kembali ke Course" di atas - eksplisit, sekali pakai, dan tidak
+     meninggalkan sisa keadaan. --}}
 
 @endsection

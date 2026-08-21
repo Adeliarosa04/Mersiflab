@@ -828,3 +828,62 @@
 html {
     scroll-behavior: smooth;
 }
+/* ===============================================
+   PERBAIKAN TATA LETAK BANNER "NOTIFICATIONS CENTER"
+   ===============================================
+   Masalah: assets/css/ui-refinements.css sengaja dimuat PALING AKHIR pada
+   layouts/app.blade.php, dan di dalamnya .page-subtitle diberi
+   "margin-left: auto; margin-right: auto; max-width: 62ch".
+   Aturan itu cocok untuk header yang rata tengah (Cart, Courses), tetapi
+   pada banner notifikasi yang memakai flex horizontal (ikon di kiri, teks di
+   kanan) subjudul jadi ter-center di dalam blok teksnya sehingga terlihat
+   terlepas dari judulnya.
+
+   Selektor di bawah lebih spesifik (0,2,0 dan 0,3,0) sehingga menang atas
+   .page-subtitle (0,1,0) tanpa bergantung pada urutan pemuatan file, dan
+   tanpa mengubah perilaku halaman lain yang memang rata tengah.
+   =============================================== */
+
+/* Ikon lonceng di kiri, blok teks di kanan, keduanya rata tengah vertikal. */
+.notifications-header .header-content {
+    align-items: center;
+}
+
+/* Pembungkus teks: judul dan subjudul tersusun vertikal dan rata kiri. */
+.notifications-header .header-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+}
+
+.notifications-header .header-text .page-title,
+.notifications-header .header-text .page-subtitle {
+    /* Batalkan auto-centering dari ui-refinements.css. */
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+    text-align: left;
+    width: 100%;
+}
+
+/* gap sudah mengatur jarak judul-subjudul, jadi margin bawah judul dinolkan
+   supaya spacing-nya konsisten dan tidak dobel. */
+.notifications-header .header-text .page-title {
+    margin-bottom: 0;
+}
+
+/* Pada layar kecil header sengaja menumpuk dan rata tengah (lihat media
+   query di atas). Perilaku itu dipertahankan. */
+@media (max-width: 768px) {
+    .notifications-header .header-text {
+        align-items: center;
+    }
+
+    .notifications-header .header-text .page-title,
+    .notifications-header .header-text .page-subtitle {
+        text-align: center;
+    }
+}

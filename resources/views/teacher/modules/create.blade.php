@@ -266,9 +266,11 @@
                             <h6 class="text-muted">Chapter: <strong>{{ $chapter->title }}</strong></h6>
                         </div>
                         <div class="col-md-6 text-end">
-                            <small class="text-muted">
+                            <small class="text-muted d-block mb-2">
                                 Current modules: <strong>{{ $chapter->modules()->count() }}</strong>
                             </small>
+                            {{-- Panduan standar materi, dibuka sebelum memilih tipe modul --}}
+                            @include('partials.guide-book')
                         </div>
                     </div>
 
@@ -346,7 +348,7 @@
             </div>
 
             <div class="mt-4">
-                <a href="{{ route('teacher.manage.content') }}" class="btn btn-outline-secondary">
+                <a href="{{ back_url(route('teacher.manage.content')) }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Management
                 </a>
             </div>

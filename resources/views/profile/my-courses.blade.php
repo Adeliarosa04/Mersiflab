@@ -27,7 +27,12 @@
                     <div class="courses-list">
                         @if(isset($courses) && $courses->count() > 0)
                             @foreach($courses as $course)
-                            <div class="course-card">
+                            {{-- id & data-course-id dipakai untuk mengembalikan
+                                 siswa tepat ke kartu course ini saat kembali
+                                 dari halaman detail course. --}}
+                            <div class="course-card"
+                                 id="course-card-{{ $course->id }}"
+                                 data-course-id="{{ $course->id }}">
                                 <div class="row align-items-center">
                                     <div class="col-md-3">
                                         <div class="course-thumbnail">
@@ -90,7 +95,9 @@
                                         @endif
                                     </div>
                                     <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                                        <a href="{{ route('course.detail', $course->id) }}" class="btn btn-primary w-100">
+                                        <a href="{{ route('course.detail', $course->id) }}"
+                                           class="btn btn-primary w-100 js-open-course"
+                                           data-course-id="{{ $course->id }}">
                                             <i class="fas fa-play me-2"></i>Start Learning
                                         </a>
                                     </div>
@@ -113,4 +120,105 @@
         </div>
     </div>
 </section>
+@endsection
+
+@section('scripts')
+<script>
+/**
+ * Mengingat posisi terakhir siswa di halaman My Courses.
+ *
+ * Saat siswa membuka detail sebuah course, posisi scroll dan course yang
+ * dibuka disimpan. Ketika ia menekan "Kembali ke My Course", halaman ini
+ * dikembalikan persis ke posisi semula dan kartu course-nya disorot sebentar.
+ *
+ * Dua sumber dipakai supaya tetap jalan di segala kondisi:
+ *   1. Query parameter ?course=ID  - dibawa oleh tombol "Kembali ke My Course",
+ *      tetap bekerja walau tab baru / sessionStorage kosong.
+ *   2. sessionStorage              - menyimpan offset scroll persisnya.
+ */
+(function () {
+    'use strict';
+
+    var STORAGE_KEY = 'mersif.myCourses.lastPosition';
+
+    function readStoredPosition() {
+        try {
+            var raw = sessionStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function storePosition(courseId) {
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                courseId: courseId || null,
+                scrollY: window.scrollY || window.pageYOffset || 0,
+                savedAt: new Date().getTime()
+            }));
+        } catch (error) {
+            // sessionStorage bisa diblokir (mode privat). Query parameter
+            // pada tombol Kembali tetap menangani pemulihan posisi.
+        }
+    }
+
+    // --- Simpan posisi sebelum meninggalkan halaman ---
+    document.addEventListener('click', function (event) {
+        var link = event.target.closest ? event.target.closest('.js-open-course') : null;
+
+        if (link) {
+            storePosition(link.dataset.courseId);
+        }
+    });
+
+    // --- Pulihkan posisi saat halaman dibuka kembali ---
+    document.addEventListener('DOMContentLoaded', function () {
+        var params = new URLSearchParams(window.location.search);
+        var courseIdFromUrl = params.get('course');
+        var stored = readStoredPosition();
+
+        // Posisi tersimpan hanya berlaku 30 menit, supaya kunjungan lama
+        // tidak tiba-tiba melompatkan halaman.
+        var isFresh = stored && (new Date().getTime() - (stored.savedAt || 0)) < 30 * 60 * 1000;
+        var targetCourseId = courseIdFromUrl || (isFresh ? stored.courseId : null);
+
+        if (!targetCourseId) {
+            return;
+        }
+
+        var card = document.getElementById('course-card-' + targetCourseId);
+
+        if (!card) {
+            return;
+        }
+
+        // Kalau offset scroll aslinya tersimpan, pakai itu supaya benar-benar
+        // persis. Kalau tidak, cukup gulirkan ke kartunya.
+        if (isFresh && typeof stored.scrollY === 'number' && stored.scrollY > 0) {
+            window.scrollTo({ top: stored.scrollY, behavior: 'auto' });
+        } else {
+            card.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+
+        // Sorot sebentar supaya siswa langsung tahu ia kembali ke course mana.
+        card.classList.add('course-card-restored');
+        window.setTimeout(function () {
+            card.classList.remove('course-card-restored');
+        }, 2400);
+
+        // Bersihkan query parameter agar URL kembali rapi dan refresh
+        // berikutnya tidak ikut menggulirkan halaman lagi.
+        if (courseIdFromUrl && window.history.replaceState) {
+            params.delete('course');
+            var query = params.toString();
+            window.history.replaceState(
+                {},
+                '',
+                window.location.pathname + (query ? '?' + query : '')
+            );
+        }
+    });
+})();
+</script>
 @endsection

@@ -243,7 +243,7 @@
                         <a href="{{ route('teacher.chapters.create', $class) }}" class="btn btn-light btn-sm">
                             <i class="fas fa-plus me-1"></i>Add Chapter
                         </a>
-                        <a href="{{ route('teacher.manage.content') }}" class="btn btn-outline-light btn-sm">
+                        <a href="{{ back_url(route('teacher.manage.content')) }}" class="btn btn-outline-light btn-sm">
                             <i class="fas fa-arrow-left me-1"></i>Back
                         </a>
                     </div>

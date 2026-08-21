@@ -23,7 +23,7 @@
             </span>
         @endif
         
-        <a href="{{ route('admin.teacher-applications.index') }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
+        <a href="{{ back_url(route('admin.teacher-applications.index')) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
             <i class="fas fa-arrow-left"></i> Back to Applications
         </a>
     </div>

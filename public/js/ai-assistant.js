@@ -9,6 +9,10 @@ class AiAssistant {
         this.allowFileUpload = false;
         this.selectedFiles = [];
         this.historyLoaded = false;
+        // CTA "Daftar / Login untuk Lanjut Chatting" yang dikirim server saat
+        // kuota tamu habis. Disimpan agar tidak dirender berulang kali.
+        this.pendingCta = null;
+        this.ctaShown = false;
         this.init();
     }
 
@@ -192,20 +196,45 @@ class AiAssistant {
 
     async checkUserLimit() {
         try {
-            const response = await fetch('/ai-assistant/check-limit');
-            const data = await response.json();
-            
+            const response = await fetch('/ai-assistant/check-limit', {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            // Server bermasalah: widget tetap tampil normal dengan nilai
+            // default, tanpa memunculkan error mentah ke pengguna.
+            if (!response.ok) {
+                console.warn('AI Assistant: check-limit responded', response.status);
+                return;
+            }
+
+            const data = await this.safeJson(response);
+            if (!data) return;
+
             this.isAuthenticated = data.is_authenticated;
             this.remainingQuestions = data.remaining_questions;
             this.isUnlimited = data.is_unlimited || false;
             this.allowFileUpload = data.allow_file_upload || false;
             this.dailyUsed = data.daily_used || 0;
             this.dailyLimit = data.daily_limit || null;
-            
+            this.pendingCta = data.cta || null;
+
             this.updateLimitWarning();
             this.updateUploadUI();
         } catch (error) {
             console.error('Error checking limit:', error);
+        }
+    }
+
+    /**
+     * Parse JSON tanpa melempar error kalau server membalas HTML
+     * (mis. halaman error 500 atau redirect login).
+     */
+    async safeJson(response) {
+        try {
+            return await response.json();
+        } catch (error) {
+            console.warn('AI Assistant: respons bukan JSON yang valid', error);
+            return null;
         }
     }
 
@@ -338,11 +367,11 @@ class AiAssistant {
             if (this.remainingQuestions > 0) {
                 warningDiv.style.display = 'flex';
                 warningDiv.classList.remove('error');
-                warningText.textContent = `Anda memiliki ${this.remainingQuestions} pertanyaan tersisa. Login untuk kesempatan lebih banyak!`;
+                warningText.textContent = `Anda memiliki ${this.remainingQuestions} pesan gratis tersisa. Daftar atau login untuk lanjut chatting!`;
             } else {
                 warningDiv.style.display = 'flex';
                 warningDiv.classList.add('error');
-                warningText.innerHTML = 'Batas pertanyaan tercapai. <a href="/login" style="color: #721c24; font-weight: bold;">Login sekarang</a>';
+                warningText.innerHTML = 'Kuota pesan gratis habis. <a href="/login" style="color: #721c24; font-weight: bold;">Login</a> atau <a href="/register" style="color: #721c24; font-weight: bold;">daftar</a> untuk lanjut chatting.';
             }
         } else {
             warningDiv.style.display = 'none';
@@ -404,14 +433,21 @@ class AiAssistant {
                     body: JSON.stringify({ message })
                 });
 
-                data = await response.json();
+                data = await this.safeJson(response);
             }
 
             this.hideTyping();
 
+            // Server balas tanpa JSON yang bisa dibaca (mis. halaman error
+            // HTML). Tampilkan pesan ramah, jangan tampilkan error mentah.
+            if (!data) {
+                this.addMessage('Maaf, layanan Mersy sedang bermasalah. Silakan coba beberapa saat lagi ya.', 'ai');
+                return;
+            }
+
             if (data.success) {
                 this.addMessage(data.answer, 'ai');
-                
+
                 // Clear files after successful send
                 if (this.selectedFiles && this.selectedFiles.length > 0) {
                     this.selectedFiles = [];
@@ -424,26 +460,36 @@ class AiAssistant {
                     this.remainingQuestions = data.remaining_questions;
                     this.updateLimitWarning();
                 }
-                
+
                 if (data.is_unlimited !== undefined) {
                     this.isUnlimited = data.is_unlimited;
                 }
-                
+
                 if (data.daily_used !== undefined) {
                     this.dailyUsed = data.daily_used;
                 }
+
+                // Pesan terakhir tamu sudah terpakai: langsung tawarkan CTA.
+                if (data.require_login) {
+                    this.showCta(data.cta);
+                }
             } else if (data.require_login) {
-                this.showLoginPrompt();
+                this.addMessage(data.message || 'Kuota pesan gratis Anda sudah habis.', 'ai');
+                this.remainingQuestions = 0;
+                this.updateLimitWarning();
+                this.showCta(data.cta);
             } else if (data.daily_limit_reached) {
                 this.addMessage(data.message, 'ai');
+                this.remainingQuestions = 0;
                 this.updateLimitWarning();
+                this.showCta(data.cta);
             } else {
-                this.addMessage('Maaf, terjadi kesalahan. Silakan coba lagi.', 'ai');
+                this.addMessage(data.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.', 'ai');
             }
         } catch (error) {
             console.error('Error:', error);
             this.hideTyping();
-            this.addMessage('Maaf, terjadi kesalahan koneksi. Silakan coba lagi.', 'ai');
+            this.addMessage('Maaf, koneksi ke Mersy sedang terganggu. Coba kirim ulang pesannya sebentar lagi ya.', 'ai');
         } finally {
             sendBtn.disabled = false;
         }
@@ -588,29 +634,73 @@ class AiAssistant {
     }
 
     showLoginPrompt() {
-        this.addMessage('Anda telah mencapai batas 3 pertanyaan. Silakan login untuk melanjutkan percakapan dengan saya. 🔐', 'ai');
-        
+        const limit = this.dailyLimit || 3;
+        this.addMessage(`Kuota ${limit} pesan gratis Anda sudah habis. Daftar atau login untuk lanjut mengobrol dengan saya — riwayat obrolan ini akan otomatis ikut pindah ke akun Anda. 🔐`, 'ai');
+        this.showCta(this.pendingCta);
+    }
+
+    /**
+     * Render tombol ajakan bertindak (CTA) di bawah percakapan.
+     * Memakai class .ai-suggestion-btn yang sudah ada agar warna dan bentuk
+     * tombol tetap konsisten dengan tampilan widget aslinya.
+     */
+    showCta(cta) {
+        if (this.ctaShown) return;
+
+        const actions = (cta && Array.isArray(cta.actions) && cta.actions.length)
+            ? cta.actions
+            : [
+                { label: 'Login', url: '/login' },
+                { label: 'Daftar Gratis', url: '/register' }
+            ];
+
+        const title = (cta && cta.title) || 'Daftar / Login untuk Lanjut Chatting';
+
+        const buttons = actions.map(action => `
+            <a class="ai-suggestion-btn ai-cta-btn" href="${this.escapeHtml(action.url || '#')}">
+                ${this.escapeHtml(action.label || 'Lanjutkan')}
+            </a>
+        `).join('');
+
         const chatBody = document.getElementById('aiChatBody');
-        const loginBtnHtml = `
+        chatBody.insertAdjacentHTML('beforeend', `
             <div class="ai-message">
                 <div class="ai-message-avatar robot"></div>
                 <div class="ai-message-content">
-                    <button class="ai-suggestion-btn" onclick="window.location.href='/login'">
-                        🔑 Login Sekarang
-                    </button>
+                    <div class="ai-cta">
+                        <div class="ai-cta-title">🔐 ${this.escapeHtml(title)}</div>
+                        <div class="ai-cta-actions">${buttons}</div>
+                    </div>
                 </div>
             </div>
-        `;
-        chatBody.insertAdjacentHTML('beforeend', loginBtnHtml);
+        `);
+
+        this.ctaShown = true;
         this.scrollToBottom(true);
     }
 
     async loadChatHistory() {
         try {
-            const response = await fetch('/ai-assistant/history');
-            const data = await response.json();
-            
-            if (data.success && data.chats.length > 0) {
+            const response = await fetch('/ai-assistant/history', {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            // Gagal memuat riwayat tidak boleh merusak widget: sapaan awal
+            // tetap ditampilkan seperti biasa.
+            if (!response.ok) {
+                console.warn('AI Assistant: history responded', response.status);
+                this.historyLoaded = true;
+                return;
+            }
+
+            const data = await this.safeJson(response);
+
+            if (!data) {
+                this.historyLoaded = true;
+                return;
+            }
+
+            if (data.success && Array.isArray(data.chats) && data.chats.length > 0) {
                 const chatBody = document.getElementById('aiChatBody');
                 chatBody.innerHTML = '';
                 

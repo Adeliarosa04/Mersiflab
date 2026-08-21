@@ -3,7 +3,10 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\FreeClassController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\DebugController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubscriptionController;
@@ -56,9 +59,33 @@ Route::middleware(['maintenance'])->group(function () {
     Route::get('/ai-assistant/history', [AiAssistantController::class, 'getHistory']);
     Route::post('/ai-assistant/chat', [AiAssistantController::class, 'chat']);
 
+    // ============================
+    // Pemilih Bahasa (Language Switcher)
+    // ============================
+    // Menyimpan pilihan bahasa ke session lalu kembali ke halaman asal.
+    // Dibatasi ke bahasa yang didukung lewat where(), jadi URL sembarangan
+    // menghasilkan 404 dan tidak pernah masuk ke controller.
+    Route::get('/language/{locale}', [\App\Http\Controllers\LanguageController::class, 'switch'])
+        ->whereIn('locale', \App\Http\Middleware\SetLocale::SUPPORTED)
+        ->name('language.switch');
+
+    // Site-wide search (courses, pages, categories, instructors)
+    Route::get('/search', [SearchController::class, 'index'])->name('search');
+    Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
+
     // Guest & Auth Routes - Public Course Routes
     Route::get('/courses', [CourseController::class, 'index'])->name('courses');
     Route::get('/course/{id}', [CourseController::class, 'detail'])->name('course.detail');
+
+    // Free Course detail (video player, deskripsi, modul PDF, slide PPT)
+    Route::get('/free-classes/{freeClass}', [FreeClassController::class, 'show'])->name('free-classes.show');
+
+    // Progres belajar per level (butuh login; controller yang memeriksanya
+    // agar tamu tetap bisa membuka halaman detail tanpa dialihkan).
+    Route::post('/free-classes/{freeClass}/levels/{level}/complete', [FreeClassController::class, 'completeLevel'])
+        ->name('free-classes.levels.complete');
+    Route::delete('/free-classes/{freeClass}/levels/{level}/complete', [FreeClassController::class, 'uncompleteLevel'])
+        ->name('free-classes.levels.uncomplete');
 
     // Module API Public Routes
     Route::get('/chapters/{chapterId}/modules', [ApiModuleController::class, 'index']);
@@ -119,6 +146,11 @@ Route::middleware(['maintenance'])->group(function () {
     })->name('about');
 
     Route::get('/checkout', [\App\Http\Controllers\CartController::class, 'showCheckout'])->name('checkout');
+
+    // Legal pages — URL disamakan dengan link yang sudah ada di footer
+    // dan halaman Sign Up (/syarat-ketentuan, /privacy-policy).
+    Route::get('/syarat-ketentuan', [LegalController::class, 'terms'])->name('terms');
+    Route::get('/privacy-policy', [LegalController::class, 'privacy'])->name('privacy');
 });
 
 // ============================
@@ -212,6 +244,10 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('teacher.dashboard');
         } elseif ($user->isStudent()) {
             return redirect()->route('student.dashboard');
+        } elseif ($user->isAdmin()) {
+            // Sebelumnya admin ikut dilempar ke home sehingga tidak punya
+            // jalan menuju panelnya sendiri.
+            return redirect()->route('admin.dashboard');
         }
         return redirect()->route('home');
     })->name('dashboard');
@@ -226,9 +262,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/subscription/payment/{plan}', [SubscriptionController::class, 'showPayment'])->name('subscription.payment');
     Route::post('/subscription/process-payment', [SubscriptionController::class, 'processPayment'])->name('subscription.process.payment');
     Route::post('/subscription/cancel-pending', [SubscriptionController::class, 'cancelPendingPurchase'])->name('subscription.cancelPending');
-    
+
+    // Pembatalan LANGGANAN AKTIF (berbeda dari cancel-pending di atas, yang
+    // hanya membatalkan pembelian yang belum dibayar). Berlaku aturan minimal
+    // 1 bulan masa aktif sebelum langganan boleh dibatalkan.
+    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancelSubscription'])->name('subscription.cancel');
+
     // My Courses
     Route::get('/my-courses', [ProfileController::class, 'myCourses'])->name('my-courses');
+
+    // Testimoni siswa: form pengisian + daftar testimoni miliknya sendiri.
+    // Testimoni tersimpan dengan status 'pending' dan baru tampil di halaman
+    // publik setelah disetujui admin.
+    Route::get('/my-testimonials', [\App\Http\Controllers\TestimonialController::class, 'index'])->name('my-testimonials');
+    Route::post('/my-testimonials', [\App\Http\Controllers\TestimonialController::class, 'store'])->name('my-testimonials.store');
+    Route::delete('/my-testimonials/{testimonial}', [\App\Http\Controllers\TestimonialController::class, 'destroy'])->name('my-testimonials.destroy');
     
     // Purchase History
     Route::get('/purchase-history', [ProfileController::class, 'purchaseHistory'])->name('purchase-history');
@@ -328,6 +376,15 @@ Route::prefix('admin')
         
         // Categories Management
         Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->middleware('activity.logger');
+
+        // Free Class Management
+        Route::resource('free-classes', \App\Http\Controllers\Admin\FreeClassController::class)
+            ->parameters(['free-classes' => 'freeClass'])
+            ->except(['show'])
+            ->middleware('activity.logger');
+        Route::post('free-classes/{freeClass}/toggle-active', [\App\Http\Controllers\Admin\FreeClassController::class, 'toggleActive'])
+            ->name('free-classes.toggleActive')
+            ->middleware('activity.logger');
         
         // Courses Management
         Route::resource('courses', AdminCourseController::class);
@@ -411,6 +468,11 @@ Route::prefix('admin')
         // Testimonials Management (Admin)
         Route::resource('testimonials', \App\Http\Controllers\Admin\TestimonialController::class)->middleware('activity.logger');
         Route::post('testimonials/{testimonial}/toggle-publish', [\App\Http\Controllers\Admin\TestimonialController::class, 'togglePublish'])->name('testimonials.togglePublish')->middleware('activity.logger');
+
+        // Moderasi testimoni siswa: setujui / tolak / kembalikan ke pending.
+        Route::post('testimonials/{testimonial}/approve', [\App\Http\Controllers\Admin\TestimonialController::class, 'approve'])->name('testimonials.approve')->middleware('activity.logger');
+        Route::post('testimonials/{testimonial}/reject', [\App\Http\Controllers\Admin\TestimonialController::class, 'reject'])->name('testimonials.reject')->middleware('activity.logger');
+        Route::post('testimonials/{testimonial}/unpublish', [\App\Http\Controllers\Admin\TestimonialController::class, 'unpublish'])->name('testimonials.unpublish')->middleware('activity.logger');
 
         // Teacher Applications Management
         Route::get('/teacher-applications', [\App\Http\Controllers\Admin\TeacherApplicationController::class, 'index'])->name('teacher-applications.index');

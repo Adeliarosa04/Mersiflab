@@ -25,7 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         // Add middleware to web group for all authenticated requests
+        //
+        // SetLocale WAJIB memakai append, bukan prepend: prepend akan
+        // menempatkannya sebelum StartSession, sehingga session belum ada saat
+        // middleware membaca pilihan bahasa dan hasilnya selalu jatuh ke
+        // default. Dengan append, ia berjalan setelah session siap dan sebelum
+        // controller/view dirender.
         $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\CheckBannedUser::class,
             \App\Http\Middleware\LogUserActivity::class,
         ]);

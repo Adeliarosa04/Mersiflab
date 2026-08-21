@@ -38,7 +38,14 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
+
+        // Redirect URI dibaca dari environment. Jika GOOGLE_REDIRECT_URI tidak
+        // di-set, fallback diturunkan dari APP_URL supaya tidak pernah kosong
+        // (redirect_uri kosong = "Error 400: invalid_request" dari Google).
+        // Nilai ini HARUS sama persis dengan Authorized redirect URI yang
+        // didaftarkan di Google Cloud Console (protocol, domain, port, path).
+        'redirect' => env('GOOGLE_REDIRECT_URI')
+            ?: rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback',
     ],
 
     'gemini' => [

@@ -6,7 +6,7 @@
 <div class="page-title">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h1>Message Details</h1>
-        <a href="{{ route('admin.messages.index') }}" class="btn btn-secondary">
+        <a href="{{ back_url(route('admin.messages.index')) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back
         </a>
     </div>

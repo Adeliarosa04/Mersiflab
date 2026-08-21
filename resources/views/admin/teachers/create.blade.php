@@ -13,7 +13,7 @@
     <p style="color: #828282; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
         Adding teachers manually will be available in a future version. Currently teachers register through the <strong>Registration</strong> page with the Teacher role.
     </p>
-    <a href="{{ route('admin.teachers.index') }}" class="btn" style="background: #2F80ED; color: white; border: none; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+    <a href="{{ back_url(route('admin.teachers.index')) }}" class="btn" style="background: #2F80ED; color: white; border: none; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
         <i class="fas fa-arrow-left me-2"></i>Back to Teachers
     </a>
 </div>

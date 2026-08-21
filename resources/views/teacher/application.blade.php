@@ -148,7 +148,7 @@
                             </div>
 
                             <div class="step-navigation">
-                                <a href="{{ route('profile') }}" class="btn btn-outline-secondary">
+                                <a href="{{ back_url(route('profile')) }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>Back to Profile
                                 </a>
                                 <button type="button" class="btn btn-primary btn-next">

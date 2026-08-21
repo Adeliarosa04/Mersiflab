@@ -14,10 +14,12 @@
             <!-- Main Content -->
             <div class="col-lg-9">
                 <div class="profile-content">
-                    <div class="profile-header mb-4">
-                        <h2 class="profile-title">Notifications</h2>
-                        <p class="profile-subtitle">Stay updated with your latest notifications</p>
-                    </div>
+                    {{-- Hero banner biru bersama (lihat
+                         resources/views/partials/notifications-hero.blade.php),
+                         dipakai juga oleh halaman Notifikasi Siswa dan Admin. --}}
+                    @include('partials.notifications-hero', [
+                        'subtitle' => 'Stay updated with your latest activities',
+                    ])
                     
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">

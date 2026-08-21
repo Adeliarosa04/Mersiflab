@@ -97,6 +97,8 @@ use Illuminate\Support\Facades\Storage;
     </div>
 </section>
 
+@endsection
+
 @section('styles')
 <style>
 .email-disabled-wrapper {

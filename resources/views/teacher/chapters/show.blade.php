@@ -24,7 +24,7 @@
                     <a href="{{ route('teacher.chapters.edit', [$class, $chapter]) }}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-edit"></i> Edit Chapter
                     </a>
-                    <a href="{{ route('teacher.chapters.index', $class) }}" class="btn btn-secondary btn-sm">
+                    <a href="{{ back_url(route('teacher.chapters.index', $class)) }}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Back to Chapters
                     </a>
                 </div>

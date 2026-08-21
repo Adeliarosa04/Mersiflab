@@ -1,0 +1,1401 @@
+/* ============================================================
+   MersifLab — Homepage Modernization Layer
+   ------------------------------------------------------------
+   Loaded AFTER welcome.css. Only styles the redesigned blocks:
+   Hero, Course Search, Statistics, Course Preview, Final CTA,
+   plus shared UX primitives (reveal, focus, buttons).
+   Existing sections (partners, testimonials, trending, FAQ)
+   are intentionally untouched.
+   ============================================================ */
+
+:root {
+    /* Brand — matches existing MersifLab palette (style.css) */
+    --ml-primary: #1a76d1;
+    --ml-primary-dark: #12599f;
+    --ml-primary-light: #4a9ee0;
+    --ml-primary-soft: #eaf3ff;
+
+    /* Neutrals */
+    --ml-ink: #0f1b2d;
+    --ml-body: #4a5b6f;
+    --ml-muted: #7d8ca0;
+    --ml-line: #e6ecf3;
+    --ml-surface: #ffffff;
+    --ml-surface-soft: #f5f8fc;
+
+    /* Shape & depth */
+    --ml-radius-sm: 10px;
+    --ml-radius: 16px;
+    --ml-radius-lg: 22px;
+    --ml-shadow-sm: 0 2px 10px rgba(15, 27, 45, 0.05);
+    --ml-shadow: 0 10px 30px rgba(15, 27, 45, 0.08);
+    --ml-shadow-lg: 0 20px 50px rgba(15, 27, 45, 0.14);
+
+    /* Rhythm */
+    --ml-section-y: clamp(56px, 7vw, 92px);
+    --ml-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ============================================================
+   1. SHARED PRIMITIVES
+   ============================================================ */
+
+/* Smooth in-page scrolling for anchor links */
+html {
+    scroll-behavior: smooth;
+    /* keep sticky navbar from covering anchored sections */
+    scroll-padding-top: 96px;
+}
+
+/* Never allow the homepage to scroll sideways */
+.ml-home {
+    overflow-x: clip;
+}
+
+/* Section heading block ---------------------------------- */
+.ml-section {
+    padding: var(--ml-section-y) 0;
+}
+
+.ml-section-head {
+    max-width: 660px;
+    margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.ml-section-head.is-centered {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.ml-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ml-primary);
+    margin-bottom: 14px;
+}
+
+.ml-eyebrow::before {
+    content: "";
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--ml-primary);
+}
+
+.ml-section-head.is-centered .ml-eyebrow::before {
+    display: none;
+}
+
+.ml-section-title {
+    font-size: clamp(1.5rem, 2.8vw, 2.125rem);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ml-ink);
+    margin-bottom: 12px;
+}
+
+.ml-section-subtitle {
+    font-size: clamp(0.95rem, 1.2vw, 1.0625rem);
+    line-height: 1.7;
+    color: var(--ml-body);
+    margin-bottom: 0;
+}
+
+/* Buttons ------------------------------------------------- */
+.ml-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.25s var(--ml-ease), box-shadow 0.25s var(--ml-ease),
+        background-color 0.25s var(--ml-ease), color 0.25s var(--ml-ease),
+        border-color 0.25s var(--ml-ease);
+}
+
+.ml-btn i {
+    font-size: 0.875em;
+    transition: transform 0.25s var(--ml-ease);
+}
+
+.ml-btn:hover i.ml-btn-arrow {
+    transform: translateX(3px);
+}
+
+.ml-btn:active {
+    transform: translateY(0) scale(0.985);
+}
+
+/* Solid brand button (on light backgrounds) */
+.ml-btn-primary {
+    background: var(--ml-primary);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(26, 118, 209, 0.28);
+}
+
+.ml-btn-primary:hover {
+    background: var(--ml-primary-dark);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(26, 118, 209, 0.36);
+}
+
+/* Outlined button (on light backgrounds) */
+.ml-btn-outline {
+    background: transparent;
+    color: var(--ml-primary);
+    border-color: rgba(26, 118, 209, 0.35);
+}
+
+.ml-btn-outline:hover {
+    background: var(--ml-primary-soft);
+    border-color: var(--ml-primary);
+    color: var(--ml-primary-dark);
+    transform: translateY(-2px);
+}
+
+/* Buttons placed on the blue hero / CTA panel */
+.ml-btn-onblue {
+    background: #fff;
+    color: var(--ml-primary-dark);
+    box-shadow: 0 10px 26px rgba(4, 26, 54, 0.24);
+}
+
+.ml-btn-onblue:hover {
+    background: #fff;
+    color: var(--ml-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(4, 26, 54, 0.3);
+}
+
+.ml-btn-onblue-ghost {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.ml-btn-onblue-ghost:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: #fff;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.ml-btn-block {
+    width: 100%;
+}
+
+/* Accessible focus ring for every new interactive element */
+.ml-home a:focus-visible,
+.ml-home button:focus-visible,
+.ml-home input:focus-visible,
+.ml-home select:focus-visible {
+    outline: 3px solid rgba(26, 118, 209, 0.45);
+    outline-offset: 3px;
+    border-radius: 8px;
+}
+
+.ml-hero a:focus-visible,
+.ml-hero button:focus-visible,
+.ml-cta-panel a:focus-visible {
+    outline-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Scroll reveal ------------------------------------------- */
+/* Gated on .ml-js (set inline in <head>) so content is never hidden
+   when scripting is unavailable. */
+.ml-js .ml-reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.7s var(--ml-ease), transform 0.7s var(--ml-ease);
+    will-change: opacity, transform;
+}
+
+.ml-js .ml-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ============================================================
+   2. HERO SECTION
+   ============================================================ */
+.ml-hero {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(52px, 7vw, 92px) 0 clamp(96px, 11vw, 148px);
+    /* The soft top-right light source is a background layer rather than an
+       overflowing ::after, so the hero does not need `overflow: hidden` —
+       that would clip the search suggestions dropdown. Sideways bleed from
+       the floating chips is contained by .ml-home's overflow-x: clip. */
+    background:
+        radial-gradient(620px 620px at calc(100% + 30px) -110px,
+            rgba(255, 255, 255, 0.18) 0%, transparent 65%),
+        linear-gradient(135deg, #0e4a8f 0%, #1a76d1 52%, #2f8cff 100%);
+    color: #fff;
+}
+
+/* Subtle technical grid — one restrained texture, no glow stacking */
+.ml-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(120% 90% at 78% 8%, #000 0%, transparent 68%);
+    mask-image: radial-gradient(120% 90% at 78% 8%, #000 0%, transparent 68%);
+}
+
+.ml-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(32px, 5vw, 64px);
+    align-items: center;
+}
+
+/* --- Hero copy --- */
+.ml-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 22px;
+    backdrop-filter: blur(6px);
+}
+
+.ml-hero-badge .ml-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #7ee0a5;
+    box-shadow: 0 0 0 4px rgba(126, 224, 165, 0.22);
+}
+
+.ml-hero-title {
+    font-size: clamp(2rem, 4.4vw, 3.35rem);
+    font-weight: 700;
+    line-height: 1.13;
+    letter-spacing: -0.015em;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+/* Accent word — a thin underline, not a second gradient */
+.ml-hero-title .ml-accent {
+    position: relative;
+    white-space: nowrap;
+}
+
+.ml-hero-title .ml-accent::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.06em;
+    height: 0.14em;
+    border-radius: 999px;
+    background: rgba(126, 224, 165, 0.85);
+    z-index: -1;
+}
+
+.ml-hero-sub {
+    font-size: clamp(0.98rem, 1.25vw, 1.125rem);
+    line-height: 1.72;
+    color: rgba(255, 255, 255, 0.86);
+    max-width: 540px;
+    margin-bottom: 32px;
+}
+
+/* Search bar, sitting inside the hero */
+.ml-hero-search {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    max-width: 560px;
+    padding: 8px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+}
+
+.ml-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+
+/* Compact proof row under the CTAs */
+.ml-hero-proof {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 26px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ml-hero-proof-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.ml-hero-proof-item i {
+    font-size: 0.95rem;
+    color: #a9e8c3;
+}
+
+/* --- Hero visual --- */
+.ml-hero-visual {
+    position: relative;
+}
+
+.ml-hero-frame {
+    position: relative;
+    padding: 10px;
+    border-radius: var(--ml-radius-lg);
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 28px 60px rgba(4, 26, 54, 0.32);
+    backdrop-filter: blur(8px);
+}
+
+.ml-hero-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+}
+
+/* Exactly two floating chips — deliberately restrained */
+.ml-hero-chip {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(4, 26, 54, 0.22);
+    color: var(--ml-ink);
+}
+
+.ml-hero-chip-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--ml-primary-soft);
+    color: var(--ml-primary);
+    font-size: 0.95rem;
+}
+
+.ml-hero-chip-value {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--ml-ink);
+}
+
+.ml-hero-chip-label {
+    font-size: 0.7rem;
+    color: var(--ml-muted);
+    line-height: 1.3;
+}
+
+.ml-hero-chip--tl {
+    top: 8%;
+    left: -26px;
+    animation: mlFloat 7s ease-in-out infinite;
+}
+
+.ml-hero-chip--br {
+    bottom: 9%;
+    right: -22px;
+    animation: mlFloat 7s ease-in-out 1.4s infinite;
+}
+
+@keyframes mlFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* ============================================================
+   3. COURSE SEARCH (lives inside the hero)
+   ============================================================ */
+.ml-search-field {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ml-search-field > i {
+    position: absolute;
+    top: 50%;
+    left: 18px;
+    transform: translateY(-50%);
+    font-size: 0.95rem;
+    color: var(--ml-muted);
+    pointer-events: none;
+    transition: color 0.25s var(--ml-ease);
+}
+
+.ml-search-input {
+    width: 100%;
+    height: 52px;
+    padding: 0 18px 0 46px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    color: var(--ml-ink);
+    background: #fff;
+    border: 1.5px solid transparent;
+    border-radius: 11px;
+    transition: border-color 0.25s var(--ml-ease), box-shadow 0.25s var(--ml-ease);
+}
+
+.ml-search-input::placeholder {
+    color: var(--ml-muted);
+}
+
+.ml-search-input:hover {
+    border-color: #cddef1;
+}
+
+.ml-search-input:focus {
+    outline: none;
+    border-color: var(--ml-primary);
+    box-shadow: 0 0 0 4px rgba(26, 118, 209, 0.18);
+}
+
+/* Clear ("x") affordance on the native search input */
+.ml-search-input::-webkit-search-cancel-button {
+    cursor: pointer;
+}
+
+.ml-search-field:focus-within > i {
+    color: var(--ml-primary);
+}
+
+/* Submitted with nothing typed */
+.ml-search-input.is-empty {
+    border-color: #e5a3a3;
+    background: #fff8f8;
+}
+
+.ml-search-input.is-empty:focus {
+    border-color: #d97070;
+    box-shadow: 0 0 0 4px rgba(217, 112, 112, 0.16);
+}
+
+.ml-search-submit {
+    height: 52px;
+    flex: 0 0 auto;
+    padding-left: 26px;
+    padding-right: 26px;
+    border-radius: 11px;
+}
+
+/* Inline spinner while suggestions are being fetched */
+.ml-search-spinner {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    border: 2px solid var(--ml-line);
+    border-top-color: var(--ml-primary);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s var(--ml-ease);
+}
+
+.is-searching .ml-search-spinner {
+    opacity: 1;
+    animation: mlSpin 0.7s linear infinite;
+}
+
+/* Suggestions dropdown ------------------------------------ */
+.ml-suggest {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    max-height: 380px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    text-align: left;
+    background: var(--ml-surface);
+    border: 1px solid var(--ml-line);
+    border-radius: 14px;
+    box-shadow: var(--ml-shadow-lg);
+}
+
+.ml-suggest[hidden] {
+    display: none;
+}
+
+/* Group heading (Courses / Pages / Categories / Instructors) */
+.ml-suggest-heading {
+    padding: 10px 12px 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ml-muted);
+}
+
+.ml-suggest-heading:not(:first-child) {
+    margin-top: 4px;
+    border-top: 1px solid var(--ml-line);
+    padding-top: 12px;
+}
+
+.ml-suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--ml-ink);
+    transition: background-color 0.15s var(--ml-ease);
+}
+
+.ml-suggest-item.is-active {
+    background: var(--ml-primary-soft);
+}
+
+.ml-suggest-thumb {
+    width: 46px;
+    height: 34px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 7px;
+    background: var(--ml-primary-soft);
+    color: var(--ml-primary);
+    font-size: 0.8rem;
+}
+
+/* Quiet colour cue so result kinds are distinguishable at a glance */
+.ml-suggest-thumb--page {
+    background: #eef1f6;
+    color: var(--ml-body);
+}
+
+.ml-suggest-thumb--category {
+    background: #eaf7f0;
+    color: #1d9a63;
+}
+
+.ml-suggest-thumb--instructor {
+    background: #f4eefb;
+    color: #7a4bb8;
+}
+
+.ml-suggest-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ml-suggest-text {
+    min-width: 0;
+}
+
+.ml-suggest-title {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ml-suggest-title mark {
+    padding: 0;
+    background: none;
+    color: var(--ml-primary);
+    font-weight: 700;
+}
+
+.ml-suggest-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--ml-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ml-suggest-empty {
+    padding: 14px 12px 6px;
+    font-size: 0.8125rem;
+    color: var(--ml-muted);
+}
+
+/* Last row: the escape hatch to the full results page */
+.ml-suggest-all {
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ml-line);
+    border-radius: 0 0 10px 10px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ml-primary);
+}
+
+.ml-suggest-all i {
+    width: 46px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+/* Loading state while the results page is being fetched */
+.ml-search-submit.is-loading {
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.ml-search-submit.is-loading .ml-search-submit-icon::before {
+    content: "\f110"; /* fa-spinner */
+    animation: mlSpin 0.8s linear infinite;
+    display: inline-block;
+}
+
+@keyframes mlSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================
+   4. STATISTICS
+   ============================================================ */
+.ml-stats-section {
+    background: var(--ml-surface-soft);
+    border-top: 1px solid var(--ml-line);
+    border-bottom: 1px solid var(--ml-line);
+}
+
+.ml-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.ml-stat-card {
+    padding: 26px 22px;
+    background: var(--ml-surface);
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius);
+    box-shadow: var(--ml-shadow-sm);
+    text-align: left;
+    transition: transform 0.3s var(--ml-ease), box-shadow 0.3s var(--ml-ease),
+        border-color 0.3s var(--ml-ease);
+}
+
+.ml-stat-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(26, 118, 209, 0.35);
+    box-shadow: var(--ml-shadow);
+}
+
+.ml-stat-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--ml-primary-soft);
+    color: var(--ml-primary);
+    font-size: 1.0625rem;
+    margin-bottom: 18px;
+    transition: background-color 0.3s var(--ml-ease), color 0.3s var(--ml-ease);
+}
+
+.ml-stat-card:hover .ml-stat-icon {
+    background: var(--ml-primary);
+    color: #fff;
+}
+
+.ml-stat-value {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: clamp(1.65rem, 2.6vw, 2.125rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ml-ink);
+    letter-spacing: -0.02em;
+}
+
+.ml-stat-suffix {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--ml-primary);
+}
+
+.ml-stat-label {
+    margin: 8px 0 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--ml-muted);
+}
+
+/* ============================================================
+   5. COURSE PREVIEW
+   ============================================================ */
+.ml-preview-section {
+    background: var(--ml-surface);
+}
+
+.ml-preview-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.ml-preview-head .ml-section-head {
+    margin-bottom: 0;
+}
+
+/* Tombol aksi di kepala seksi preview (Free Class + Browse All Courses). */
+.ml-preview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* Category filter -----------------------------------------
+   Reuses the existing .course-category-* markup, but toned down for this
+   section: the original solid-blue slab was a third large blue block on a
+   page that already has a blue hero and a blue CTA panel. Scoped to
+   .ml-preview-section so the component is untouched anywhere else. */
+.ml-preview-section .course-category-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-bottom: clamp(24px, 3vw, 34px);
+    padding: 14px 18px;
+    background: var(--ml-surface-soft);
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius);
+    box-shadow: none;
+}
+
+.ml-preview-section .course-category-wrapper::before,
+.ml-preview-section .course-category-wrapper::after {
+    display: none;
+}
+
+.ml-preview-section .course-category-label {
+    margin-bottom: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.09em;
+    color: var(--ml-muted);
+}
+
+.ml-preview-section .course-category-label i {
+    color: var(--ml-primary);
+    font-size: 0.85rem;
+    animation: none; /* the pulsing icon reads as noise here */
+}
+
+.ml-preview-section .course-category-select-wrapper {
+    flex: 1 1 240px;
+    max-width: 340px;
+}
+
+.ml-preview-section .course-category-select {
+    padding: 12px 44px 12px 16px;
+    font-size: 0.9375rem;
+    background: var(--ml-surface);
+    color: var(--ml-ink);
+    border: 1.5px solid var(--ml-line);
+    border-radius: 11px;
+    box-shadow: none;
+}
+
+.ml-preview-section .course-category-select:hover {
+    background: var(--ml-surface);
+    border-color: #cddef1;
+    box-shadow: none;
+    transform: none;
+}
+
+.ml-preview-section .course-category-select:focus {
+    background: var(--ml-surface);
+    border-color: var(--ml-primary);
+    box-shadow: 0 0 0 4px rgba(26, 118, 209, 0.14);
+}
+
+.ml-preview-section .course-category-select-wrapper::before {
+    display: none;
+}
+
+/* Chevron: the inherited pale-blue hover/focus colours are invisible on the
+   light surface, so restate them here. */
+.ml-preview-section .course-category-select-wrapper::after,
+.ml-preview-section .course-category-select-wrapper:hover::after,
+.ml-preview-section .course-category-select:hover ~ .course-category-select-wrapper::after {
+    right: 16px;
+    color: var(--ml-muted);
+    background: none;
+    box-shadow: none;
+}
+
+.ml-preview-section .course-category-select-wrapper:hover::after {
+    color: var(--ml-primary);
+}
+
+.ml-preview-section .course-category-select:focus ~ .course-category-select-wrapper::after {
+    color: var(--ml-primary);
+}
+
+.ml-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+}
+
+/* Bootstrap's .fade needs its paired .show to reveal a filtered tab */
+.ml-preview-section .tab-pane {
+    transition: opacity 0.3s var(--ml-ease);
+}
+
+.ml-preview-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--ml-surface);
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius-lg);
+    overflow: hidden;
+    transition: transform 0.32s var(--ml-ease), box-shadow 0.32s var(--ml-ease),
+        border-color 0.32s var(--ml-ease);
+}
+
+.ml-preview-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(26, 118, 209, 0.3);
+    box-shadow: var(--ml-shadow);
+}
+
+/* Thumbnail + skeleton loading state */
+.ml-preview-thumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: linear-gradient(100deg, #eef3f9 30%, #f7fafd 50%, #eef3f9 70%);
+    background-size: 220% 100%;
+}
+
+.ml-preview-thumb.is-loading {
+    animation: mlShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes mlShimmer {
+    0% {
+        background-position: 130% 0;
+    }
+    100% {
+        background-position: -30% 0;
+    }
+}
+
+.ml-preview-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.4s var(--ml-ease), transform 0.5s var(--ml-ease);
+}
+
+.ml-preview-thumb img.is-loaded {
+    opacity: 1;
+}
+
+.ml-preview-card:hover .ml-preview-thumb img {
+    transform: scale(1.05);
+}
+
+.ml-preview-thumb-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #1a76d1, #4a9ee0);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 2rem;
+}
+
+.ml-preview-level {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--ml-primary-dark);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(4, 26, 54, 0.16);
+}
+
+.ml-preview-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 22px;
+}
+
+.ml-preview-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ml-ink);
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.25s var(--ml-ease);
+}
+
+.ml-preview-card:hover .ml-preview-title {
+    color: var(--ml-primary);
+}
+
+.ml-preview-instructor {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 14px;
+    font-size: 0.8125rem;
+    color: var(--ml-body);
+}
+
+.ml-preview-avatar {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--ml-primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.ml-preview-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ml-preview-desc {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: var(--ml-body);
+    margin-bottom: 18px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Preview cards intentionally carry no rating, duration, lesson count, or
+   price — those live on the course detail page. */
+.ml-preview-foot {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--ml-line);
+}
+
+.ml-preview-cta {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+    font-size: 0.8125rem;
+    border-radius: 10px;
+}
+
+/* Empty state */
+.ml-preview-empty {
+    grid-column: 1 / -1;
+    padding: 56px 24px;
+    text-align: center;
+    border: 1.5px dashed var(--ml-line);
+    border-radius: var(--ml-radius-lg);
+    background: var(--ml-surface-soft);
+}
+
+.ml-preview-empty i {
+    font-size: 2.25rem;
+    color: var(--ml-primary-light);
+    margin-bottom: 14px;
+}
+
+.ml-preview-empty p {
+    color: var(--ml-muted);
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   6. FINAL CTA
+   ============================================================ */
+.ml-cta-section {
+    padding: 0 0 var(--ml-section-y);
+    background: var(--ml-surface);
+}
+
+.ml-cta-panel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(40px, 6vw, 68px) clamp(24px, 5vw, 64px);
+    border-radius: clamp(20px, 3vw, 28px);
+    background: linear-gradient(135deg, #0e4a8f 0%, #1a76d1 58%, #2f8cff 100%);
+    color: #fff;
+    text-align: center;
+}
+
+.ml-cta-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(90% 120% at 50% 0%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(90% 120% at 50% 0%, #000 0%, transparent 72%);
+}
+
+.ml-cta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    margin-bottom: 20px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.ml-cta-title {
+    font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin-bottom: 14px;
+    color: #fff;
+}
+
+.ml-cta-text {
+    max-width: 560px;
+    margin: 0 auto 30px;
+    font-size: clamp(0.95rem, 1.2vw, 1.0625rem);
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.ml-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+}
+
+.ml-cta-note {
+    margin: 26px 0 0;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================================
+   7. RESPONSIVE
+   ============================================================ */
+
+/* Laptop / small desktop */
+@media (max-width: 1199.98px) {
+    .ml-stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ml-preview-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ml-hero-chip--tl {
+        left: -8px;
+    }
+
+    .ml-hero-chip--br {
+        right: -6px;
+    }
+}
+
+/* Tablet */
+@media (max-width: 991.98px) {
+    .ml-hero {
+        padding-bottom: clamp(88px, 12vw, 120px);
+        text-align: center;
+    }
+
+    .ml-hero-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 44px;
+    }
+
+    .ml-hero-sub {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .ml-hero-actions,
+    .ml-hero-proof {
+        justify-content: center;
+    }
+
+    .ml-hero-search {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .ml-hero-visual {
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .ml-preview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ml-section-head {
+        max-width: none;
+    }
+}
+
+/* Large phone / small tablet */
+@media (max-width: 767.98px) {
+    .ml-hero-title .ml-accent {
+        white-space: normal;
+    }
+
+    .ml-hero-chip {
+        padding: 10px 13px;
+        gap: 9px;
+    }
+
+    .ml-hero-chip-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .ml-hero-chip-value {
+        font-size: 0.85rem;
+    }
+
+    .ml-hero-chip--tl {
+        top: 4%;
+        left: -4px;
+    }
+
+    .ml-hero-chip--br {
+        bottom: 5%;
+        right: -4px;
+    }
+
+    /* Search keeps one row but drops the button label so the input stays wide */
+    .ml-search-submit {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .ml-search-submit span {
+        display: none;
+    }
+
+    .ml-search-submit .ml-search-submit-icon {
+        font-size: 1rem;
+    }
+
+    .ml-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .ml-stat-card {
+        padding: 20px 18px;
+    }
+
+    .ml-stat-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 0.95rem;
+        margin-bottom: 14px;
+    }
+
+    .ml-preview-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .ml-preview-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ml-preview-actions {
+        flex-direction: column;
+    }
+
+    .ml-preview-section .course-category-wrapper {
+        padding: 14px 16px;
+    }
+
+    .ml-preview-section .course-category-select-wrapper {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    .ml-cta-actions .ml-btn {
+        flex: 1 1 220px;
+    }
+}
+
+/* Phone */
+@media (max-width: 575.98px) {
+    .ml-hero {
+        padding-top: 40px;
+    }
+
+    .ml-hero-actions .ml-btn {
+        width: 100%;
+    }
+
+    .ml-hero-proof {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* Floating chips would crowd a small screen — drop to one */
+    .ml-hero-chip--tl {
+        display: none;
+    }
+
+    .ml-hero-chip--br {
+        right: 50%;
+        transform: translateX(50%);
+        bottom: -18px;
+        animation: none;
+    }
+
+    .ml-hero-search {
+        padding: 6px;
+        gap: 8px;
+    }
+
+    .ml-search-input,
+    .ml-search-submit {
+        height: 48px;
+    }
+
+    .ml-cta-actions .ml-btn {
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   8. REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .ml-js .ml-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .ml-hero-chip--tl,
+    .ml-hero-chip--br,
+    .ml-preview-thumb.is-loading {
+        animation: none;
+    }
+
+    .ml-btn,
+    .ml-stat-card,
+    .ml-preview-card,
+    .ml-preview-thumb img {
+        transition: none;
+    }
+
+    .ml-btn:hover,
+    .ml-stat-card:hover,
+    .ml-preview-card:hover {
+        transform: none;
+    }
+}

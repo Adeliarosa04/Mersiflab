@@ -16,6 +16,10 @@ class CourseController extends Controller
      */
     public function index(Request $request)
     {
+        // Free Class — kelas gratis yang dikelola admin, tampil di bagian atas
+        // halaman. Query terpisah dan tidak memengaruhi daftar kursus utama.
+        $freeClasses = \App\Models\FreeClass::active()->ordered()->get();
+
         // Get popular courses (most popular by student enrollment count)
         $popularCoursesQuery = ClassModel::published()
             ->with(['teacher','category'])
@@ -37,6 +41,10 @@ class CourseController extends Controller
 
         // Note: We no longer exclude purchased courses from the list
         // Purchased courses should remain visible and show as unlocked
+
+        // Keyword search (course name, description, category, instructor)
+        // Driven by the homepage search bar.
+        $this->applySearch($query, $request->input('search'));
 
         // Filter by category
         if ($request->filled('category') && $request->category !== 'all') {
@@ -109,7 +117,34 @@ class CourseController extends Controller
 
         $featuredCourses = $featuredCoursesQuery->take(6)->get();
 
-        return view('courses', compact('courses', 'popularCourses', 'popularInstructors', 'categories', 'featuredCourses'));
+        return view('courses', compact('courses', 'popularCourses', 'popularInstructors', 'categories', 'featuredCourses', 'freeClasses'));
+    }
+
+    /**
+     * Apply the keyword filter shared by the catalogue and the autocomplete.
+     *
+     * Matches course name, description, category slug, and instructor name.
+     * A blank term leaves the query untouched.
+     */
+    private function applySearch($query, $term)
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return $query;
+        }
+
+        // Escape LIKE wildcards so "100%" is searched literally
+        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $term) . '%';
+
+        return $query->where(function ($q) use ($like) {
+            $q->where('classes.name', 'like', $like)
+              ->orWhere('classes.description', 'like', $like)
+              ->orWhere('classes.category', 'like', $like)
+              ->orWhereHas('teacher', function ($teacher) use ($like) {
+                  $teacher->where('name', 'like', $like);
+              });
+        });
     }
 
     /**

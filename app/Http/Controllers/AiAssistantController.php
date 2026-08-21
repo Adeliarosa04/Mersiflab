@@ -3,295 +3,489 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiChat;
+use App\Models\User;
+use App\Services\GuestChatService;
+use App\Services\LlmService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Endpoint Mersy AI Assistant.
+ *
+ * Prinsip penanganan error di controller ini: tidak ada detail teknis yang
+ * bocor ke browser. Semua exception dicatat lewat Log::error, sementara
+ * pengguna hanya menerima pesan yang ramah, dan widget chat tetap tampil
+ * normal.
+ */
 class AiAssistantController extends Controller
 {
-    public function chat(Request $request)
+    public function __construct(
+        private LlmService $llm,
+        private GuestChatService $guestChats,
+    ) {
+    }
+
+    /**
+     * Kirim pertanyaan ke AI Assistant.
+     */
+    public function chat(Request $request): JsonResponse
     {
         $request->validate([
-            'message' => 'required|string|max:1000'
+            'message' => 'required|string|max:1000',
         ]);
 
-        $userId = Auth::id();
-        $sessionId = Session::getId();
         $user = Auth::user();
+        $quota = $this->resolveQuota($request, $user);
 
-        // Default settings
-        $guestLimit = 3;
-        $dailyLimit = null;
-        $allowFiles = false;
-
-        if (!$user) {
-            $dailyLimit = $guestLimit;
-            $allowFiles = false;
-        } else {
-            $hasSubscription = $user->hasActiveSubscription();
-            $plan = strtolower($user->subscription_plan ?? '');
-            $hasCourse = $user->enrolledClasses()->exists() || $user->classes()->exists();
-
-            if ($hasSubscription) {
-                $dailyLimit = null;
-                $allowFiles = ($plan === 'premium');
-            } else {
-                $dailyLimit = $hasCourse ? 15 : 5;
-                $allowFiles = false;
-            }
-        }
-
-        // Check file upload permission
-        if ($request->hasFile('files') && !$allowFiles) {
+        // --- Batas kuota tamu (3 pesan) ---------------------------------
+        if (!$user && $quota['remaining'] !== null && $quota['remaining'] <= 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya pengguna subscription premium yang dapat mengirim file.',
+                'message' => "Kuota {$quota['limit']} pesan gratis Anda sudah habis. Daftar atau login untuk melanjutkan mengobrol dengan Mersy.",
+                'require_login' => true,
+                'remaining_questions' => 0,
+                'daily_limit' => $quota['limit'],
+                'cta' => $this->loginCta(),
             ], 403);
         }
 
-        // Validate files if allowed
-        if ($allowFiles) {
-            $rules = [
-                'files.*' => 'file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt',
-                'file' => 'file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt'
-            ];
-            $request->validate($rules);
+        // --- Batas kuota harian pengguna terdaftar -----------------------
+        if ($user && $quota['limit'] !== null && $quota['remaining'] !== null && $quota['remaining'] <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Anda sudah mencapai batas {$quota['limit']} pertanyaan hari ini. Silakan lanjutkan besok, atau berlangganan untuk akses tanpa batas.",
+                'daily_limit_reached' => true,
+                'remaining_questions' => 0,
+                'daily_limit' => $quota['limit'],
+                'cta' => $this->subscriptionCta(),
+            ], 429);
         }
 
-        // Check limits
-        if (!$user) {
-            $guestChatCount = AiChat::where('session_id', $sessionId)
-                ->whereNull('user_id')
-                ->count();
+        // --- Validasi lampiran file (khusus subscriber Premium) ----------
+        if (($request->hasFile('files') || $request->hasFile('file')) && !$quota['allow_files']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lampiran file hanya tersedia untuk pengguna subscription Premium.',
+            ], 403);
+        }
 
-            if ($guestChatCount >= $dailyLimit) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Batas {$dailyLimit} pertanyaan tercapai. Silakan login untuk melanjutkan.",
-                    'require_login' => true
-                ], 403);
-            }
-        } else {
-            if ($dailyLimit !== null) {
-                $userChatCount = AiChat::where('user_id', $userId)
-                    ->whereDate('created_at', today())
-                    ->count();
-
-                if ($userChatCount >= $dailyLimit) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Anda telah mencapai batas {$dailyLimit} pertanyaan per hari. Silakan coba lagi besok.",
-                        'daily_limit_reached' => true
-                    ], 429);
-                }
-            }
+        if ($quota['allow_files']) {
+            $request->validate([
+                'files.*' => 'file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt',
+                'file' => 'file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx,txt',
+            ]);
         }
 
         try {
-            // Process uploaded files
-            $savedFiles = [];
-            $extractedFiles = [];
+            [$savedFiles, $fileContext] = $quota['allow_files']
+                ? $this->processAttachments($request)
+                : [[], ''];
 
-            if ($allowFiles) {
-                $uploaded = $request->file('files') ?? $request->file('file');
-
-                if ($uploaded) {
-                    if (!is_array($uploaded)) {
-                        $uploaded = [$uploaded];
-                    }
-
-                    foreach ($uploaded as $file) {
-                        if (!$file) continue;
-                        $path = $file->store('ai_attachments', 'public');
-                        $savedFiles[] = [
-                            'path' => $path,
-                            'name' => $file->getClientOriginalName(),
-                            'size' => $file->getSize()
-                        ];
-
-                        // Extract text from file
-                        $fullPath = storage_path('app/public/' . $path);
-                        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-                        $extracted = $this->extractTextFromFile($fullPath, $ext);
-                        if ($extracted) {
-                            $extractedFiles[$file->getClientOriginalName()] = $extracted;
-                        }
-                    }
-                }
-            }
-
-            // Build prompt with file contents
-            $basePrompt = $this->buildPrompt($request->message);
-            $fullPrompt = $basePrompt;
-            
-            if (!empty($extractedFiles)) {
-                $fullPrompt .= "\n\n=== KONTEN FILE TERLAMPIR ===\n";
-                foreach ($extractedFiles as $fname => $content) {
-                    $snippet = mb_substr($content, 0, 3500);
-                    $fullPrompt .= "\nFile: {$fname}\n{$snippet}\n";
-                }
-                $fullPrompt .= "\n=== AKHIR KONTEN FILE ===\n";
-            }
-
-            // Build parts for Gemini API
-            $parts = [['text' => $fullPrompt]];
-            
-            // Add image files as inline data
-            if (!empty($savedFiles)) {
-                foreach ($savedFiles as $fileInfo) {
-                    $fullPath = storage_path('app/public/' . $fileInfo['path']);
-                    $mimeType = $this->getFileMimeType($fullPath);
-                    
-                    if ($this->isSupportedImageType($mimeType)) {
-                        $base64 = base64_encode(file_get_contents($fullPath));
-                        $parts[] = [
-                            'inline_data' => [
-                                'mime_type' => $mimeType,
-                                'data' => $base64
-                            ]
-                        ];
-                    }
-                }
-            }
-
-            // Call Gemini API
-            $response = Http::timeout(60)->withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post(
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . config('services.gemini.key'),
-                [
-                    'contents' => [
-                        [
-                            'role' => 'user',
-                            'parts' => $parts
-                        ]
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.7,
-                        'maxOutputTokens' => 4096,
-                        'topP' => 0.95,
-                        'topK' => 40,
-                        'stopSequences' => []
-                    ],
-                    'safetySettings' => [
-                        [
-                            'category' => 'HARM_CATEGORY_HARASSMENT',
-                            'threshold' => 'BLOCK_NONE'
-                        ],
-                        [
-                            'category' => 'HARM_CATEGORY_HATE_SPEECH',
-                            'threshold' => 'BLOCK_NONE'
-                        ],
-                        [
-                            'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                            'threshold' => 'BLOCK_NONE'
-                        ],
-                        [
-                            'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                            'threshold' => 'BLOCK_NONE'
-                        ]
-                    ]
-                ]
+            $result = $this->llm->ask(
+                question: $request->input('message'),
+                extraParts: $this->inlineImageParts($savedFiles),
+                fileContext: $fileContext,
             );
 
-            if (!$response->successful()) {
+            // LLM tidak tersedia: balas 200 dengan pesan ramah supaya widget
+            // menampilkannya sebagai bubble biasa, bukan layar error.
+            // Pesan gagal juga TIDAK memotong kuota pengguna.
+            if (!$result['success']) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal menghubungi AI',
-                    'error' => $response->json()
-                ], 500);
+                    'success' => true,
+                    'answer' => $result['answer'],
+                    'service_unavailable' => true,
+                    'remaining_questions' => $quota['remaining'],
+                    'daily_limit' => $quota['limit'],
+                    'is_unlimited' => $quota['limit'] === null,
+                    'allow_file_upload' => $quota['allow_files'],
+                    'daily_used' => $quota['used'],
+                ]);
             }
 
-            // Parse response
-            $data = $response->json();
-            $answer = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $answer = $result['answer'];
 
-            if (!$answer) {
-                $answer = 'Maaf, saya belum dapat menjawab pertanyaan tersebut.';
-            }
-
-            // Clean markdown
-            $answer = $this->cleanMarkdown($answer);
-
-            // Add file attachment info
             if (!empty($savedFiles)) {
-                $fileNames = array_map(function($f) {
-                    return $f['name'];
-                }, $savedFiles);
-                $answer .= "\n\n---\n\n📎 File terlampir: " . implode(', ', $fileNames);
+                $answer .= "\n\n---\n\n📎 File terlampir: "
+                    . implode(', ', array_column($savedFiles, 'name'));
             }
 
-            // Save chat
-            AiChat::create([
-                'user_id' => $userId,
-                'session_id' => $userId ? null : $sessionId,
-                'question' => $request->message,
-                'answer' => $answer
-            ]);
+            $this->storeChat($request, $user, $request->input('message'), $answer);
 
-            // Calculate remaining questions
-            $remaining = null;
-            $dailyUsed = null;
-
-            if (!$userId) {
-                $used = AiChat::where('session_id', $sessionId)
-                    ->whereNull('user_id')
-                    ->count();
-
-                $remaining = max(0, $dailyLimit - $used);
-
-                if ($remaining === 1) {
-                    $answer .= "\n\n---\n\n⚠️ Ini adalah pertanyaan terakhir Anda. Login untuk mendapatkan akses lebih ke Mersy AI Assistant!";
-                } elseif ($remaining === 0) {
-                    $answer .= "\n\n---\n\n🔒 Anda telah menggunakan semua pertanyaan gratis. Login sekarang untuk melanjutkan percakapan dengan saya!";
-                }
-            } else {
-                if ($dailyLimit !== null) {
-                    $used = AiChat::where('user_id', $userId)
-                        ->whereDate('created_at', today())
-                        ->count();
-
-                    $remaining = max(0, $dailyLimit - $used);
-                    $dailyUsed = $used;
-
-                    if ($remaining <= 5 && $remaining > 0) {
-                        $answer .= "\n\n---\n\n⚠️ Anda memiliki {$remaining} pertanyaan tersisa hari ini.";
-                    } elseif ($remaining === 0) {
-                        $answer .= "\n\n---\n\n🔒 Anda telah mencapai batas harian. Silakan coba lagi besok!";
-                    }
-                }
-            }
+            // Hitung ulang kuota setelah pesan tersimpan.
+            $quota = $this->resolveQuota($request, $user);
+            $answer .= $this->quotaNotice($user, $quota);
 
             return response()->json([
                 'success' => true,
                 'answer' => $answer,
-                'remaining_questions' => $remaining,
-                'is_unlimited' => $userId && $dailyLimit === null,
-                'allow_file_upload' => $allowFiles,
-                'daily_used' => $dailyUsed,
-                'files_attached' => !empty($savedFiles) ? array_map(function($f) {
-                    return [
-                        'name' => $f['name'],
-                        'size' => $f['size']
-                    ];
-                }, $savedFiles) : null
+                'remaining_questions' => $quota['remaining'],
+                'daily_limit' => $quota['limit'],
+                'daily_used' => $quota['used'],
+                'is_unlimited' => $quota['limit'] === null,
+                'allow_file_upload' => $quota['allow_files'],
+                'require_login' => !$user && $quota['remaining'] === 0,
+                'cta' => (!$user && $quota['remaining'] === 0) ? $this->loginCta() : null,
+                'files_attached' => !empty($savedFiles)
+                    ? array_map(fn ($f) => ['name' => $f['name'], 'size' => $f['size']], $savedFiles)
+                    : null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('AiAssistant: gagal memproses pesan chat', [
+                'user_id' => $user?->id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile() . ':' . $e->getLine(),
             ]);
 
-        } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan sistem',
-                'error' => $e->getMessage()
-            ], 500);
+                'success' => true,
+                'answer' => 'Maaf, ada kendala teknis di sisi kami saat memproses pesan Anda. Silakan coba kirim ulang beberapa saat lagi ya.',
+                'service_unavailable' => true,
+            ]);
         }
+    }
+
+    /**
+     * Riwayat percakapan (20 terakhir) untuk user login maupun tamu.
+     */
+    public function getHistory(Request $request): JsonResponse
+    {
+        try {
+            $userId = Auth::id();
+
+            $query = AiChat::query()->orderBy('created_at', 'asc')->limit(20);
+
+            if ($userId) {
+                $query->where('user_id', $userId);
+            } else {
+                $token = $this->guestChats->resolveToken($request);
+                $sessionId = $this->guestChats->currentSessionId();
+
+                $query->whereNull('user_id')
+                    ->where(function ($q) use ($token, $sessionId) {
+                        $q->where('guest_token', $token);
+
+                        if (filled($sessionId)) {
+                            $q->orWhere('session_id', $sessionId);
+                        }
+                    });
+            }
+
+            return response()->json([
+                'success' => true,
+                'chats' => $query->get(['id', 'question', 'answer', 'created_at']),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('AiAssistant: gagal memuat riwayat chat', ['error' => $e->getMessage()]);
+
+            // Riwayat kosong lebih baik daripada widget error.
+            return response()->json(['success' => true, 'chats' => []]);
+        }
+    }
+
+    /**
+     * Status kuota untuk ditampilkan di widget.
+     */
+    public function checkLimit(Request $request): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            $quota = $this->resolveQuota($request, $user);
+
+            return response()->json([
+                'success' => true,
+                'is_authenticated' => (bool) $user,
+                'remaining_questions' => $quota['remaining'],
+                'daily_limit' => $quota['limit'],
+                'daily_used' => $quota['used'],
+                'is_unlimited' => $quota['limit'] === null,
+                'allow_file_upload' => $quota['allow_files'],
+                'subscription_plan' => $user?->subscription_plan,
+                'service_available' => $this->llm->isConfigured(),
+                'cta' => (!$user && $quota['remaining'] === 0) ? $this->loginCta() : null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('AiAssistant: gagal memeriksa kuota', ['error' => $e->getMessage()]);
+
+            // Fallback aman: widget tetap bisa dipakai dengan kuota tamu default.
+            return response()->json([
+                'success' => true,
+                'is_authenticated' => Auth::check(),
+                'remaining_questions' => Auth::check() ? null : $this->guestChats->quotaLimit(),
+                'daily_limit' => Auth::check() ? null : $this->guestChats->quotaLimit(),
+                'daily_used' => 0,
+                'is_unlimited' => false,
+                'allow_file_upload' => false,
+                'service_available' => $this->llm->isConfigured(),
+            ]);
+        }
+    }
+
+    /**
+     * Hitung kuota berdasarkan status pengguna.
+     *
+     * @return array{limit:?int, used:int, remaining:?int, allow_files:bool}
+     */
+    private function resolveQuota(Request $request, ?User $user): array
+    {
+        // --- Tamu: kuota berbasis token cookie + session id ---------------
+        if (!$user) {
+            $token = $this->guestChats->resolveToken($request);
+            $sessionId = $this->guestChats->currentSessionId();
+
+            $limit = $this->guestChats->quotaLimit();
+            $used = $this->guestChats->usedQuota($token, $sessionId);
+
+            return [
+                'limit' => $limit,
+                'used' => $used,
+                'remaining' => max(0, $limit - $used),
+                'allow_files' => false,
+            ];
+        }
+
+        // --- Pengguna terdaftar ------------------------------------------
+        $hasSubscription = false;
+        $hasCourse = false;
+
+        try {
+            $hasSubscription = $user->hasActiveSubscription();
+            $hasCourse = $user->enrolledClasses()->exists() || $user->classes()->exists();
+        } catch (\Throwable $e) {
+            Log::warning('AiAssistant: gagal membaca status langganan/kursus user', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $plan = strtolower((string) ($user->subscription_plan ?? ''));
+
+        if ($hasSubscription) {
+            return [
+                'limit' => null, // tanpa batas
+                'used' => $this->userUsedToday($user),
+                'remaining' => null,
+                'allow_files' => $plan === 'premium',
+            ];
+        }
+
+        $limit = $hasCourse
+            ? (int) config('llm.quota.student', 15)
+            : (int) config('llm.quota.free_user', 5);
+
+        $used = $this->userUsedToday($user);
+
+        return [
+            'limit' => $limit,
+            'used' => $used,
+            'remaining' => max(0, $limit - $used),
+            'allow_files' => false,
+        ];
+    }
+
+    /**
+     * Jumlah pertanyaan user hari ini. Kegagalan DB dianggap 0 agar chat
+     * tetap bisa dipakai.
+     */
+    private function userUsedToday(User $user): int
+    {
+        try {
+            return AiChat::where('user_id', $user->id)
+                ->whereDate('created_at', today())
+                ->count();
+        } catch (\Throwable $e) {
+            Log::error('AiAssistant: gagal menghitung pemakaian harian', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return 0;
+        }
+    }
+
+    /**
+     * Simpan percakapan. Untuk tamu, guest_token ikut disimpan agar riwayatnya
+     * bisa dimigrasikan ke akun saat pengguna login/register.
+     */
+    private function storeChat(Request $request, ?User $user, string $question, string $answer): void
+    {
+        try {
+            AiChat::create([
+                'user_id' => $user?->id,
+                'session_id' => $user ? null : $this->guestChats->currentSessionId(),
+                'guest_token' => $user ? null : $this->guestChats->resolveToken($request),
+                'question' => $question,
+                'answer' => $answer,
+            ]);
+        } catch (\Throwable $e) {
+            // Jawaban sudah didapat - gagal menyimpan riwayat tidak boleh
+            // membatalkan jawaban yang akan ditampilkan ke pengguna.
+            Log::error('AiAssistant: gagal menyimpan riwayat chat', [
+                'user_id' => $user?->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Catatan sisa kuota yang ditempel di akhir jawaban.
+     */
+    private function quotaNotice(?User $user, array $quota): string
+    {
+        if ($quota['limit'] === null) {
+            return '';
+        }
+
+        $remaining = $quota['remaining'];
+
+        if (!$user) {
+            if ($remaining === 1) {
+                return "\n\n---\n\n⚠️ Ini pesan gratis terakhir Anda. Daftar atau login untuk lanjut mengobrol dengan Mersy.";
+            }
+
+            if ($remaining === 0) {
+                return "\n\n---\n\n🔒 Kuota pesan gratis Anda sudah habis. Daftar atau login untuk melanjutkan — riwayat obrolan ini akan otomatis ikut pindah ke akun Anda.";
+            }
+
+            return '';
+        }
+
+        if ($remaining === 0) {
+            return "\n\n---\n\n🔒 Anda sudah mencapai batas harian. Silakan lanjut besok, atau berlangganan untuk akses tanpa batas.";
+        }
+
+        if ($remaining !== null && $remaining <= 5) {
+            return "\n\n---\n\n⚠️ Sisa {$remaining} pertanyaan untuk hari ini.";
+        }
+
+        return '';
+    }
+
+    /**
+     * CTA "Daftar / Login untuk Lanjut Chatting" untuk widget.
+     */
+    private function loginCta(): array
+    {
+        return [
+            'title' => 'Daftar / Login untuk Lanjut Chatting',
+            'actions' => [
+                ['label' => 'Login', 'url' => route('login')],
+                ['label' => 'Daftar Gratis', 'url' => route('register')],
+            ],
+        ];
+    }
+
+    /**
+     * CTA berlangganan untuk user terdaftar yang kuota hariannya habis.
+     */
+    private function subscriptionCta(): array
+    {
+        return [
+            'title' => 'Berlangganan untuk chat tanpa batas',
+            'actions' => [
+                ['label' => 'Lihat Paket', 'url' => route('subscription.page')],
+            ],
+        ];
+    }
+
+    /**
+     * Simpan lampiran & ekstrak teksnya untuk konteks tambahan.
+     *
+     * @return array{0: array<int, array{path:string, name:string, size:int}>, 1: string}
+     */
+    private function processAttachments(Request $request): array
+    {
+        $uploaded = $request->file('files') ?? $request->file('file');
+
+        if (!$uploaded) {
+            return [[], ''];
+        }
+
+        if (!is_array($uploaded)) {
+            $uploaded = [$uploaded];
+        }
+
+        $savedFiles = [];
+        $contextParts = [];
+
+        foreach ($uploaded as $file) {
+            if (!$file) {
+                continue;
+            }
+
+            try {
+                $path = $file->store('ai_attachments', 'public');
+
+                $savedFiles[] = [
+                    'path' => $path,
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                ];
+
+                $fullPath = storage_path('app/public/' . $path);
+                $extracted = $this->extractTextFromFile(
+                    $fullPath,
+                    strtolower(pathinfo($path, PATHINFO_EXTENSION))
+                );
+
+                if ($extracted) {
+                    $contextParts[] = "File: {$file->getClientOriginalName()}\n" . mb_substr($extracted, 0, 3500);
+                }
+            } catch (\Throwable $e) {
+                Log::error('AiAssistant: gagal memproses lampiran', [
+                    'file' => $file->getClientOriginalName(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return [$savedFiles, implode("\n\n", $contextParts)];
+    }
+
+    /**
+     * Ubah lampiran gambar menjadi bagian inline_data untuk request LLM.
+     */
+    private function inlineImageParts(array $savedFiles): array
+    {
+        $parts = [];
+
+        foreach ($savedFiles as $fileInfo) {
+            try {
+                $fullPath = storage_path('app/public/' . $fileInfo['path']);
+                $mimeType = $this->getFileMimeType($fullPath);
+
+                if (!$this->isSupportedImageType($mimeType)) {
+                    continue;
+                }
+
+                $binary = @file_get_contents($fullPath);
+
+                if ($binary === false) {
+                    continue;
+                }
+
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => $mimeType,
+                        'data' => base64_encode($binary),
+                    ],
+                ];
+            } catch (\Throwable $e) {
+                Log::warning('AiAssistant: gagal menyiapkan gambar untuk LLM', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $parts;
     }
 
     private function getFileMimeType(string $filePath): string
     {
         $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        
+
         $mimeTypes = [
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
@@ -303,296 +497,65 @@ class AiAssistantController extends Controller
             'doc' => 'application/msword',
             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ];
-        
-        return $mimeTypes[$ext] ?? mime_content_type($filePath);
+
+        if (isset($mimeTypes[$ext])) {
+            return $mimeTypes[$ext];
+        }
+
+        return file_exists($filePath) ? (mime_content_type($filePath) ?: 'application/octet-stream') : 'application/octet-stream';
     }
 
     private function isSupportedImageType(string $mimeType): bool
     {
-        $supported = [
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'image/webp',
-        ];
-        
-        return in_array($mimeType, $supported);
+        return in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true);
     }
 
-    private function buildPrompt(string $message): string
-    {
-        return <<<PROMPT
-Kamu adalah Mersy, AI Assistant untuk platform belajar MersifLab yang mengajarkan teknologi modern.
-
-IDENTITAS MERSIFLAB:
-MersifLab adalah platform pembelajaran teknologi (LMS - Learning Management System) yang menyediakan kursus dan materi edukasi di berbagai bidang:
-- Internet of Things (IoT) - Keunggulan utama dan spesialisasi MersifLab
-- Virtual Reality (VR) dan Augmented Reality (AR)
-- Artificial Intelligence (AI) dan Machine Learning
-- Web Development (Frontend, Backend, Full Stack)
-- Mobile App Development
-- Kategori lain dapat dicek di LMS MersifLab
-
-FITUR LMS MERSIFLAB YANG TERSEDIA SAAT INI:
-- Katalog kursus dengan berbagai kategori teknologi
-- Video pembelajaran berkualitas tinggi
-- Materi pembelajaran terstruktur (modul dan bab)
-- Dashboard user untuk tracking progress
-- Sertifikat digital setelah menyelesaikan kursus
-- Akses materi 24/7 dari berbagai perangkat
-- Mersy AI Assistant (kamu!) untuk bantuan belajar
-- Program Become a Teacher untuk user yang ingin menjadi guru
-
-PROGRAM MENJADI GURU DI MERSIFLAB:
-Pengguna MersifLab dapat menjadi guru dan membuat kursus sendiri dengan mengikuti proses berikut:
-
-Cara Menjadi Guru:
-1. Login ke akun MersifLab Anda
-2. Buka halaman Profil atau akses menu untuk program mengajar
-3. Klik "Want to become a teacher?"
-4. Isi formulir aplikasi dengan informasi lengkap Anda
-5. Upload berkas persyaratan yang diminta (seperti CV, sertifikat, portfolio, atau dokumen kualifikasi lainnya)
-6. Submit aplikasi dan tunggu proses review dari tim admin MersifLab
-7. Admin akan mengevaluasi aplikasi dan berkas yang Anda kirimkan
-8. Anda akan menerima notifikasi saat aplikasi diterima atau ditolak
-9. Setelah disetujui, Anda mendapatkan akses untuk membuat dan mengelola kursus
-10. Mulai buat kursus baru dan bagikan pengetahuan Anda dengan ribuan pembelajaran di MersifLab
-
-Persyaratan Umum Menjadi Guru:
-- Memiliki keahlian di bidang teknologi tertentu
-- Pengalaman atau sertifikasi yang relevan
-- Kemampuan mengajar yang baik dan komunikatif
-- Komitmen untuk memberikan kualitas pembelajaran terbaik
-- Mematuhi kode etik dan standar kualitas MersifLab
-
-Keuntungan Menjadi Guru di MersifLab:
-1. Berbagi pengetahuan dengan komunitas global
-2. Mendapatkan akses ke tools dan resources pengajaran profesional
-3. Potensi penghasilan dari kursus yang Anda buat
-4. Membangun reputasi sebagai expert di bidang Anda
-5. Dukungan tim support dari MersifLab
-
-FITUR YANG SEDANG DIKEMBANGKAN (belum tersedia):
-- Forum diskusi dan komunitas
-- Project hands-on interaktif
-- Kuis dan evaluasi otomatis
-- Sistem mentor langsung
-- Live class dan webinar
-
-ATURAN MENJAWAB PERTANYAAN:
-
-1. PERTANYAAN UMUM TEKNOLOGI (bukan tentang MersifLab):
-   - Jawab pertanyaan dengan LENGKAP dan JELAS
-   - Berikan informasi edukatif yang berguna
-   - Fokus pada MENJAWAB pertanyaan user
-   - Hanya sebutkan MersifLab di AKHIR sebagai tambahan jika topiknya relevan dengan kursus yang ada
-   - Jangan paksa promosi MersifLab jika tidak relevan
-   
-   Contoh:
-   Q: "Bagaimana cara belajar Python?"
-   A: [Jawab lengkap tentang cara belajar Python] + [Opsional: sebutkan jika MersifLab punya kursus terkait]
-   
-   Q: "Apa itu manajemen proyek?"
-   A: [Jawab lengkap tentang manajemen proyek] + [Jangan sebutkan MersifLab karena tidak relevan]
-
-2. PERTANYAAN TENTANG MERSIFLAB:
-   - Jawab dengan detail tentang platform, fitur, dan kursus
-   - Tekankan IoT sebagai keunggulan utama
-   - Jelaskan fitur yang tersedia vs yang sedang dikembangkan
-   - Jujur tentang apa yang ada dan belum ada
-
-3. JIKA ADA FILE/GAMBAR TERLAMPIR:
-   - Analisis konten file/gambar dengan detail
-   - Jelaskan apa yang kamu lihat/baca
-   - Jawab pertanyaan user berdasarkan konten file
-   - Berikan insight edukatif terkait konten
-
-ATURAN FORMAT PENTING:
-
-1. JANGAN gunakan markdown (**bold**, *italic*, `, #)
-2. JANGAN gunakan simbol formatting atau numbering pada main points
-3. JANGAN gunakan angka 1., 2., 3. untuk main points
-
-4. FORMAT STRUKTUR JAWABAN:
-   
-   A. POIN UTAMA DENGAN SUB-POIN (ada detail/langkah):
-      - Tulis JUDUL POIN (tanpa angka) diikuti titik dua (:)
-      - Baris berikutnya: list dengan bullet points (-)
-      - Minimal 2 sub-poin
-      
-      Contoh:
-      Pelajari Elektronika Dasar:
-      - Pahami konsep tegangan dan arus
-      - Kenali komponen seperti resistor dan LED
-      - Praktik dengan breadboard
-
-   B. POIN UTAMA TANPA SUB-POIN (langsung penjelasan):
-      - Tulis langsung sebagai PARAGRAF
-      - JANGAN pakai angka atau bullet
-      - Jelaskan dalam 2-4 kalimat
-      
-      Contoh:
-      Setelah menguasai dasar, mulailah dengan proyek sederhana seperti LED blinking. Proyek ini akan membantu Anda memahami cara kerja mikrokontroler dan pemrograman dasar. Dokumentasikan setiap langkah untuk pembelajaran di masa depan.
-
-ATURAN KELENGKAPAN:
-- JANGAN PERNAH berhenti di tengah kalimat atau list
-- PASTIKAN semua poin selesai dijelaskan
-- Minimal 150 kata untuk pertanyaan kompleks
-- Maksimal 500 kata agar tetap fokus
-
-Pertanyaan pengguna: {$message}
-
-REMINDER CRITICAL:
-- JANGAN pakai numbering (1., 2., 3.) di main points
-- Poin dengan sub-detail: Heading + bullets (min 2 bullets)
-- Poin tanpa sub-detail: Langsung paragraf
-- Pisahkan sections dengan 1 baris kosong
-- Selesaikan semua poin dengan lengkap
-PROMPT;
-    }
-
-    private function cleanMarkdown(string $text): string
-    {
-        // Remove all markdown formatting
-        $text = preg_replace('/\*\*(.*?)\*\*/', '$1', $text); // Bold
-        $text = preg_replace('/\*(.*?)\*/', '$1', $text);     // Italic
-        $text = preg_replace('/`(.*?)`/', '$1', $text);       // Inline code
-        $text = preg_replace('/```[\s\S]*?```/', '', $text);  // Code blocks
-        $text = preg_replace('/#{1,6}\s*/', '', $text);       // Headers
-        
-        // Remove markdown links but keep the text
-        $text = preg_replace('/\[([^\]]+)\]\([^\)]+\)/', '$1', $text);
-        
-        // Remove any remaining backticks
-        $text = str_replace('`', '', $text);
-        
-        // Normalize line breaks
-        $text = preg_replace('/\r\n/', "\n", $text);
-        $text = preg_replace('/\r/', "\n", $text);
-        
-        // Clean up excessive newlines
-        $text = preg_replace('/\n{3,}/', "\n\n", $text);
-        
-        return trim($text);
-    }
-
+    /**
+     * Ekstraksi teks sederhana dari lampiran txt/docx/pdf.
+     */
     private function extractTextFromFile(string $fullPath, string $ext): ?string
     {
         try {
-            if (!file_exists($fullPath)) return null;
-
-            $ext = strtolower($ext);
+            if (!file_exists($fullPath)) {
+                return null;
+            }
 
             if ($ext === 'txt') {
-                $content = file_get_contents($fullPath);
-                return $content ?: null;
+                return file_get_contents($fullPath) ?: null;
             }
 
             if ($ext === 'docx') {
                 $zip = new \ZipArchive();
+
                 if ($zip->open($fullPath) === true) {
                     $index = $zip->locateName('word/document.xml');
+
                     if ($index !== false) {
                         $data = $zip->getFromIndex($index);
                         $zip->close();
-                        $text = strip_tags($data);
-                        return $text ?: null;
+
+                        return strip_tags($data) ?: null;
                     }
+
                     $zip->close();
                 }
+
                 return null;
             }
 
-            if ($ext === 'pdf') {
-                if (function_exists('shell_exec')) {
-                    $cmd = 'pdftotext ' . escapeshellarg($fullPath) . ' -';
-                    $out = @shell_exec($cmd . ' 2>&1');
-                    if ($out && !str_contains(strtolower($out), 'not found')) {
-                        return $out;
-                    }
+            if ($ext === 'pdf' && function_exists('shell_exec')) {
+                $out = @shell_exec('pdftotext ' . escapeshellarg($fullPath) . ' - 2>&1');
+
+                if ($out && !str_contains(strtolower($out), 'not found')) {
+                    return $out;
                 }
-                return null;
             }
 
             return null;
         } catch (\Throwable $e) {
+            Log::warning('AiAssistant: gagal mengekstrak teks lampiran', ['error' => $e->getMessage()]);
+
             return null;
         }
-    }
-
-    public function getHistory()
-    {
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-
-        $chats = AiChat::where(function ($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId)
-                          ->whereNull('user_id');
-                }
-            })
-            ->orderBy('created_at', 'asc')
-            ->limit(20)
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'chats' => $chats
-        ]);
-    }
-
-    public function checkLimit()
-    {
-        $user = Auth::user();
-
-        $guestLimit = 3;
-        $dailyLimit = null;
-        $allowFiles = false;
-
-        if (!$user) {
-            $sessionId = Session::getId();
-            $used = AiChat::where('session_id', $sessionId)
-                ->whereNull('user_id')
-                ->count();
-
-            return response()->json([
-                'success' => true,
-                'is_authenticated' => false,
-                'remaining_questions' => max(0, $guestLimit - $used),
-                'daily_limit' => $guestLimit,
-                'daily_used' => $used,
-                'is_unlimited' => false,
-                'allow_file_upload' => false,
-            ]);
-        }
-
-        $hasSubscription = $user->hasActiveSubscription();
-        $plan = strtolower($user->subscription_plan ?? '');
-        $hasCourse = $user->enrolledClasses()->exists() || $user->classes()->exists();
-
-        if ($hasSubscription) {
-            $dailyLimit = null;
-            $allowFiles = ($plan === 'premium');
-        } else {
-            $dailyLimit = $hasCourse ? 15 : 5;
-            $allowFiles = false;
-        }
-
-        $used = AiChat::where('user_id', $user->id)
-            ->whereDate('created_at', today())
-            ->count();
-
-        return response()->json([
-            'success' => true,
-            'is_authenticated' => true,
-            'remaining_questions' => $dailyLimit === null ? null : max(0, $dailyLimit - $used),
-            'daily_limit' => $dailyLimit,
-            'daily_used' => $used,
-            'is_unlimited' => $dailyLimit === null,
-            'allow_file_upload' => $allowFiles,
-            'subscription_plan' => $user->subscription_plan
-        ]);
     }
 }

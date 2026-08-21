@@ -320,7 +320,7 @@
                             <button type="submit" class="btn btn-info">
                                 <i class="fas fa-save me-2"></i>Update Chapter
                             </button>
-                            <a href="{{ route('teacher.manage.content') }}" class="btn btn-outline-secondary">
+                            <a href="{{ back_url(route('teacher.manage.content')) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                         </div>

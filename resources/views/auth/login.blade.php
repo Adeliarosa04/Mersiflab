@@ -101,6 +101,16 @@
         }
     });
 
+    // Loading state + cegah submit ganda pada form login.
+    document.getElementById('loginForm')?.addEventListener('submit', function () {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Signing in…';
+        }
+    });
+
     // Show SweetAlert for general login errors (email/password wrong)
     @if($errors->any())
         document.addEventListener('DOMContentLoaded', function() {

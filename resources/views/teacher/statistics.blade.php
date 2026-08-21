@@ -11,6 +11,16 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         transition: transform 0.2s, box-shadow 0.2s;
         height: 100%;
+
+        /* Ikon dekoratif di sisi kanan sudah dihapus. Tanpa penyeimbang itu,
+           teks rata kiri menyisakan ruang kosong lebar di kanan kartu; label
+           dan angka karena itu dipusatkan. Flex kolom menjaga isi tetap di
+           tengah secara vertikal walau tinggi kartu disamakan height: 100%
+           dan kartu "Total Pendapatan" memakai ukuran font lebih kecil. */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
     }
 
     .stat-card:hover {
@@ -29,15 +39,6 @@
         font-weight: 700;
         color: #2196f3;
         margin-bottom: 0.5rem;
-    }
-
-    .stat-card .stat-icon {
-        font-size: 2.5rem;
-        opacity: 0.2;
-        position: absolute;
-        right: 1.5rem;
-        top: 50%;
-        transform: translateY(-50%);
     }
 
     .chart-placeholder {
@@ -232,68 +233,60 @@
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Total Courses</div>
                                 <div class="stat-value">{{ $totalCourses }}</div>
-                                <i class="fas fa-book stat-icon" style="color: #007bff;"></i>
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Total Chapters</div>
                                 <div class="stat-value">{{ $totalChapters }}</div>
-                                <i class="fas fa-layer-group stat-icon" style="color: #28a745;"></i>
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Total Modules</div>
                                 <div class="stat-value">{{ $totalModules }}</div>
-                                <i class="fas fa-file-alt stat-icon" style="color: #ffc107;"></i>
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Total Students</div>
                                 <div class="stat-value">{{ $totalStudents }}</div>
-                                <i class="fas fa-users stat-icon" style="color: #dc3545;"></i>
                             </div>
                         </div>
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Total Enrollments</div>
                                 <div class="stat-value">{{ $totalEnrollments }}</div>
-                                <i class="fas fa-user-plus stat-icon" style="color: #17a2b8;"></i>
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Avg. Completion Rate</div>
                                 <div class="stat-value">{{ number_format($avgCompletionRate, 1) }}%</div>
-                                <i class="fas fa-chart-pie stat-icon" style="color: #28a745;"></i>
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Published Courses</div>
                                 <div class="stat-value">{{ $totalCourses }}</div>
-                                <i class="fas fa-check-circle stat-icon" style="color: #28a745;"></i>
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <div class="stat-card position-relative">
+                            <div class="stat-card">
                                 <div class="stat-label">Total Pendapatan</div>
                                 <div class="stat-value" style="font-size: 1.5rem;">Rp{{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</div>
-                                <i class="fas fa-money-bill-wave stat-icon" style="color: #28a745;"></i>
                             </div>
                         </div>
                     </div>

@@ -1689,3 +1689,89 @@
     .badge-category,
     .badge-tier { font-size: 11px; padding: 5px 11px; }
 }
+/* ======================================================
+   TOMBOL KEMBALI PADA DETAIL COURSE
+   Dipakai bersama oleh tampilan Siswa, Guru, dan publik.
+   Palet mengikuti breadcrumb yang sudah ada pada halaman
+   ini: #64748b teks netral, #2563eb aksen hover,
+   #e2e8f0 garis tepi.
+====================================================== */
+.course-detail-topbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+/* --- Tombol sekunder "Kembali" --- */
+.btn-course-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.btn-course-back:hover,
+.btn-course-back:focus {
+    background: #f8fafc;
+    border-color: #2563eb;
+    color: #2563eb;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    text-decoration: none;
+}
+
+/* Panah bergeser ke kiri saat hover sebagai petunjuk arah. */
+.btn-course-back i {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.btn-course-back:hover i {
+    transform: translateX(-3px);
+}
+
+
+@media (max-width: 576px) {
+    .btn-course-back span {
+        display: none;
+    }
+
+    .btn-course-back {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        justify-content: center;
+    }
+}
+
+/* ============================================================
+   SOROTAN CHAPTER SAAT SISWA KEMBALI DARI MODUL
+   Menandai chapter tempat modul terakhir yang dipelajari,
+   supaya siswa langsung tahu sampai mana progresnya.
+   Memakai warna aksen kurikulum yang sudah ada (#3b82f6).
+   ============================================================ */
+.chapter-card-resumed {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    animation: chapterCardResumed 2.6s ease-out;
+}
+
+@keyframes chapterCardResumed {
+    0%   { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.45); }
+    35%  { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.18); }
+    100% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chapter-card-resumed {
+        animation: none;
+    }
+}

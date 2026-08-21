@@ -43,7 +43,7 @@
         </div>
         <div>
             @if($user->role === 'teacher')
-                <a href="{{ route('admin.teachers.show', $user->id) }}" 
+                <a href="{{ back_url(route('admin.teachers.show', $user->id)) }}" 
                    class="btn" 
                    style="background: #e3f2fd; color: #1976d2; border: 1px solid #90caf9; padding: 8px 16px; font-size: 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;"
                    onmouseover="this.style.background='#1976d2'; this.style.color='white'; this.style.borderColor='#1976d2';" 
@@ -51,7 +51,7 @@
                     <i class="fas fa-arrow-left"></i>Back to Teacher
                 </a>
             @elseif($user->role === 'student')
-                <a href="{{ route('admin.students.show', $user->id) }}" 
+                <a href="{{ back_url(route('admin.students.show', $user->id)) }}" 
                    class="btn" 
                    style="background: #e8f5e9; color: #27AE60; border: 1px solid #a5d6a7; padding: 8px 16px; font-size: 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;"
                    onmouseover="this.style.background='#27AE60'; this.style.color='white'; this.style.borderColor='#27AE60';" 
@@ -59,7 +59,7 @@
                     <i class="fas fa-arrow-left"></i>Back to Student
                 </a>
             @elseif($user->role === 'admin')
-                <a href="{{ route('admin.admins.show', $user->id) }}" 
+                <a href="{{ back_url(route('admin.admins.show', $user->id)) }}" 
                    class="btn" 
                    style="background: #fff3e0; color: #f57c00; border: 1px solid #ffcc02; padding: 8px 16px; font-size: 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;"
                    onmouseover="this.style.background='#f57c00'; this.style.color='white'; this.style.borderColor='#f57c00';" 

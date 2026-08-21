@@ -234,7 +234,7 @@
                         </div>
 
                         <div class="d-flex gap-3 justify-content-end">
-                            <a href="{{ route('teacher.chapters.index', $class) }}" class="btn btn-outline-secondary">
+                            <a href="{{ back_url(route('teacher.chapters.index', $class)) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">

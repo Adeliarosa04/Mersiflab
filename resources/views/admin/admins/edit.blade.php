@@ -6,7 +6,7 @@
 <div class="page-title">
     <h1>Edit Admin</h1>
     <div class="page-actions">
-        <a href="{{ route('admin.admins.show', $admin->id) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
+        <a href="{{ back_url(route('admin.admins.show', $admin->id)) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
             <i class="fas fa-arrow-left"></i> Back to Detail Admin
         </a>
     </div>
@@ -168,7 +168,7 @@
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef;">
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                        <a href="{{ route('admin.admins.index') }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; color: white; text-decoration: none;">
+                        <a href="{{ back_url(route('admin.admins.index')) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; color: white; text-decoration: none;">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-primary" style="background: #2F80ED; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; color: white; cursor: pointer;">

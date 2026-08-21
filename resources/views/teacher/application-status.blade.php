@@ -186,7 +186,7 @@
 
                         <!-- Action Buttons -->
                         <div class="text-center mt-4">
-                            <a href="{{ route('profile') }}" class="btn btn-primary">
+                            <a href="{{ back_url(route('profile')) }}" class="btn btn-primary">
                                 <i class="fas fa-arrow-left me-2"></i>Back to Profile
                             </a>
                             

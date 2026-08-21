@@ -9,7 +9,7 @@
         <p style="color: #828282; margin: 5px 0 0 0; font-size: 14px;">All activities performed by {{ $student->name }}</p>
     </div>
     <div>
-        <a href="{{ route('admin.students.show', $student->id) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
+        <a href="{{ back_url(route('admin.students.show', $student->id)) }}" class="btn btn-secondary" style="background: #6c757d; border: none; padding: 8px 16px; font-size: 13px; border-radius: 6px; color: white; text-decoration: none;">
             <i class="fas fa-arrow-left"></i> Back to Student Details
         </a>
     </div>

@@ -3,7 +3,10 @@
     use Illuminate\Support\Facades\Storage;
 @endphp
 
-<div class="profile-sidebar">
+{{-- Kelas teacher-sidebar dipakai agar aturan gulir di bawah hanya berlaku
+     untuk panel guru. Halaman profil siswa memakai .profile-sidebar yang sama
+     lewat profile/partials/sidebar.blade.php dan tidak boleh ikut berubah. --}}
+<div class="profile-sidebar teacher-sidebar">
     <!-- Profile Avatar -->
     <div class="profile-avatar-section text-center">
         <div class="profile-avatar-wrapper position-relative mx-auto">
@@ -164,6 +167,77 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+/* ==========================================================
+   PANEL SAMPING GURU - GULIR MANDIRI
+
+   Masalah sebelumnya: .profile-sidebar sudah position: sticky (top: 100px)
+   tetapi tanpa batas tinggi. Isinya - avatar 100px, nama, email, badge,
+   enam menu, dan tombol logout - kira-kira 700px. Di laptop 1366x768 area
+   pandang yang tersisa hanya ~640px, sehingga sidebar lebih tinggi daripada
+   ruang tempatnya menempel. Elemen sticky yang lebih tinggi dari scrollport
+   tidak punya tempat untuk dipaku: ia ikut tergulir sampai ujung bawahnya
+   sejajar, persis seperti yang terlihat.
+
+   Perbaikannya bukan mengubah struktur halaman, melainkan membatasi tinggi
+   sidebar setinggi layar dan memberinya scrollbar sendiri.
+
+   Catatan struktur: layout ini memakai Bootstrap 5, bukan Tailwind, dan
+   <main> diikuti <footer> di layouts/app.blade.php. Membungkus halaman dalam
+   kotak setinggi 100vh dengan overflow-hidden - seperti pola Tailwind
+   h-[calc(100vh-70px)] - akan membuat footer tidak pernah bisa dijangkau,
+   jadi area konten sengaja tetap memakai gulir jendela.
+   ========================================================== */
+@media (min-width: 992px) {
+    .teacher-sidebar {
+        /* Header .header-section memakai position: sticky; top: 0, jadi
+           offset ini menahan sidebar tepat di bawahnya tanpa tertutup. */
+        position: sticky;
+        top: 100px;
+
+        /* 100px offset atas + 20px napas bawah. */
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+
+        /* Gulir sidebar berhenti di ujungnya sendiri, tidak merembet
+           menggulirkan halaman di belakangnya. */
+        overscroll-behavior: contain;
+
+        /* Scrollbar tipis, senada dengan panel Admin (Firefox). */
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+
+    /* Scrollbar tipis untuk Chrome/Edge/Safari. */
+    .teacher-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .teacher-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .teacher-sidebar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .teacher-sidebar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+}
+
+/* Di layar sempit sidebar menumpuk di atas konten. Menempel dan membatasi
+   tingginya di sana justru merusak: panel akan menutupi konten dan isinya
+   terpotong. Jadi perilakunya dikembalikan ke aliran normal. */
+@media (max-width: 991.98px) {
+    .teacher-sidebar {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        margin-bottom: 24px;
+    }
+}
+
 /* Teacher Sidebar Profile Avatar Section */
 .profile-avatar-section {
     text-align: center;

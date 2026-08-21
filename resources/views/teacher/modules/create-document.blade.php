@@ -233,6 +233,11 @@
                     </h5>
                 </div>
                 <div class="card-body teacher-form-body">
+                    {{-- Panduan standar materi, dibuka sebelum berkas dipilih --}}
+                    <div class="d-flex justify-content-end mb-4">
+                        @include('partials.guide-book')
+                    </div>
+
                     <form action="{{ route('teacher.modules.store.document', $chapter) }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
@@ -274,7 +279,7 @@
                         </div>
 
                         <div class="d-flex gap-3 justify-content-end">
-                            <a href="{{ route('teacher.modules.create', $chapter) }}" class="btn btn-outline-secondary">
+                            <a href="{{ back_url(route('teacher.modules.create', $chapter)) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -287,7 +292,11 @@
         </div>
     </div>
 </div>
+@endsection
 
+{{-- @section('scripts') sebelumnya dibuka di dalam @section('content') dan
+     hanya ada satu @endsection, sehingga section 'content' tidak pernah
+     ditutup: isinya bocor keluar dan tercetak sebelum <!DOCTYPE html>. --}}
 @section('scripts')
 <script>
     // File size validation for PDF upload

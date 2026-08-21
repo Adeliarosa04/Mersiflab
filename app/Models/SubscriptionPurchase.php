@@ -10,6 +10,25 @@ class SubscriptionPurchase extends Model
 {
     use HasFactory;
 
+    /** Menunggu pembayaran / konfirmasi admin. */
+    public const STATUS_PENDING = 'pending';
+
+    /** Sudah dibayar dan aktif. */
+    public const STATUS_SUCCESS = 'success';
+
+    /** Masa aktif berakhir. */
+    public const STATUS_EXPIRED = 'expired';
+
+    /** Dibatalkan (oleh pengguna maupun ditolak admin). */
+    public const STATUS_CANCELLED = 'cancelled';
+
+    /**
+     * Digantikan paket yang lebih tinggi lewat alur upgrade.
+     * Berbeda dari 'cancelled': pengguna tidak kehilangan layanan, paketnya
+     * naik. Dipakai untuk jejak audit dan riwayat pembelian.
+     */
+    public const STATUS_UPGRADED = 'upgraded';
+
     protected $fillable = [
         'purchase_code',
         'user_id',
@@ -21,7 +40,11 @@ class SubscriptionPurchase extends Model
         'payment_method',
         'payment_provider',
         'paid_at',
+        'started_at',
         'expires_at',
+        'cancelled_at',
+        'replaced_by_id',
+        'is_upgrade',
         'notes',
     ];
 
@@ -30,7 +53,10 @@ class SubscriptionPurchase extends Model
         'discount_amount' => 'decimal:2',
         'final_amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'started_at' => 'datetime',
         'expires_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'is_upgrade' => 'boolean',
     ];
 
     protected static function boot()
@@ -144,11 +170,19 @@ class SubscriptionPurchase extends Model
      */
     public function activateSubscription()
     {
+        $now = now();
+
+        // Paket lama yang masih aktif (kalau ada) digantikan oleh paket ini.
+        // Dijalankan SEBELUM update user, supaya data lama masih bisa dibaca.
+        $replaced = $this->replaceActiveSubscriptions();
+
         $this->update([
-            'status' => 'success',
-            'paid_at' => now(),
+            'status' => self::STATUS_SUCCESS,
+            'paid_at' => $this->paid_at ?? $now,
+            'started_at' => $now,
             'payment_provider' => $this->payment_provider ?? 'whatsapp',
-            'expires_at' => now()->addMonth(),
+            'expires_at' => $now->copy()->addMonth(),
+            'is_upgrade' => $this->is_upgrade || $replaced->isNotEmpty(),
             'notes' => ($this->notes ?? '') . ' - Activated by admin via WhatsApp confirmation',
         ]);
 
@@ -156,16 +190,24 @@ class SubscriptionPurchase extends Model
         $this->user->update([
             'is_subscriber' => true,
             'subscription_plan' => $this->plan,
+            'subscription_started_at' => $now,
             'subscription_expires_at' => $this->expires_at,
+            'subscription_cancelled_at' => null,
         ]);
+
+        $isUpgrade = $replaced->isNotEmpty();
 
         // Create notification for student
         if (Schema::hasTable('notifications')) {
+            $message = $isUpgrade
+                ? "Upgrade ke paket {$this->plan} berhasil! Paket lama Anda sudah digantikan dan semua materi sesuai paket baru langsung bisa diakses."
+                : "Paket {$this->plan} Anda sudah aktif! Anda sekarang dapat mengakses semua course sesuai paket Anda. Selamat belajar!";
+
             Notification::create([
                 'user_id' => $this->user_id,
-                'type' => 'subscription_activated',
-                'title' => 'Subscription Aktif!',
-                'message' => "Paket {$this->plan} Anda sudah aktif! Anda sekarang dapat mengakses semua course sesuai paket Anda. Selamat belajar!",
+                'type' => $isUpgrade ? 'subscription_upgraded' : 'subscription_activated',
+                'title' => $isUpgrade ? 'Upgrade Paket Berhasil!' : 'Subscription Aktif!',
+                'message' => $message,
                 'notifiable_type' => SubscriptionPurchase::class,
                 'notifiable_id' => $this->id,
                 'is_read' => false,
@@ -174,8 +216,75 @@ class SubscriptionPurchase extends Model
 
         // Log activity if method exists
         if (method_exists($this->user, 'logActivity')) {
-            $this->user->logActivity('subscription_activated', 'Subscription activated for ' . ucfirst($this->plan) . ' plan - expires: ' . $this->expires_at->format('Y-m-d'));
+            $this->user->logActivity(
+                $isUpgrade ? 'subscription_upgraded' : 'subscription_activated',
+                ($isUpgrade ? 'Subscription upgraded to ' : 'Subscription activated for ')
+                    . ucfirst($this->plan) . ' plan - expires: ' . $this->expires_at->format('Y-m-d')
+            );
         }
+    }
+
+    /**
+     * Tandai semua langganan sukses milik user yang masih aktif sebagai
+     * 'upgraded' karena digantikan purchase ini.
+     *
+     * Tidak melempar exception: kegagalan pencatatan riwayat tidak boleh
+     * membatalkan aktivasi paket yang sudah dibayar pengguna.
+     *
+     * @return \Illuminate\Support\Collection<int, SubscriptionPurchase>
+     */
+    protected function replaceActiveSubscriptions()
+    {
+        try {
+            $previous = static::where('user_id', $this->user_id)
+                ->where('id', '!=', $this->id)
+                ->where('status', self::STATUS_SUCCESS)
+                ->get();
+
+            foreach ($previous as $old) {
+                $old->update([
+                    'status' => self::STATUS_UPGRADED,
+                    'replaced_by_id' => $this->id,
+                    'notes' => ($old->notes ?? '') . ' - Replaced by ' . $this->purchase_code
+                        . ' (upgrade to ' . $this->plan . ') on ' . now()->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            return $previous;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Subscription: gagal menandai paket lama sebagai upgraded', [
+                'purchase_id' => $this->id,
+                'user_id' => $this->user_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return collect();
+        }
+    }
+
+    /**
+     * Purchase pengganti (diisi saat paket ini di-upgrade).
+     */
+    public function replacedBy()
+    {
+        return $this->belongsTo(self::class, 'replaced_by_id');
+    }
+
+    /**
+     * Batalkan langganan aktif ini atas permintaan pengguna.
+     *
+     * Aturan minimal 1 bulan TIDAK diperiksa di sini - itu tanggung jawab
+     * SubscriptionPlanService yang dipanggil controller, supaya aturan bisnis
+     * hanya ditulis di satu tempat.
+     */
+    public function cancelByUser(?string $reason = null): void
+    {
+        $this->update([
+            'status' => self::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+            'notes' => ($this->notes ?? '') . ' - Cancelled by user on ' . now()->format('Y-m-d H:i:s')
+                . ($reason ? ' (' . $reason . ')' : ''),
+        ]);
     }
 
     /**

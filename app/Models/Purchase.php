@@ -117,8 +117,26 @@ class Purchase extends Model
             ]
         );
 
-        // Add earnings dari purchase (gunakan teacher_earning jika ada, atau hitung dari amount)
-        $earnings = $purchase->teacher_earning ?? $purchase->amount;
+        // Bagian guru adalah nominal transaksi DIKURANGI komisi platform.
+        //
+        // Sebelumnya baris ini berbunyi:
+        //     $earnings = $purchase->teacher_earning ?? $purchase->amount;
+        // Kolom teacher_earning tidak pernah diisi oleh alur pembelian mana pun,
+        // sehingga selalu jatuh ke $purchase->amount - harga bruto. Akibatnya
+        // guru dikreditkan 100% dari harga kursus dan komisi aplikasi hilang.
+        $setting = \App\Models\CommissionSetting::getForTeacher($teacher->id);
+        $earnings = \App\Support\TeacherEarnings::netForPurchase($purchase, $setting);
+
+        // Rincian komisi disimpan di barisnya sendiri supaya transaksi lama
+        // tetap memakai tarif yang berlaku saat itu walau pengaturan berubah,
+        // dan supaya admin bisa menelusuri asal angkanya.
+        if ($purchase->teacher_earning === null) {
+            $purchase->forceFill([
+                'teacher_earning' => $earnings,
+                'platform_commission' => (float) $purchase->amount - $earnings,
+            ])->saveQuietly();
+        }
+
         $balance->addEarnings($earnings);
     }
 

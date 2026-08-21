@@ -114,7 +114,7 @@
             </span>
             <span class="preview-title">{{ $course->name ?? 'Untitled Course' }}</span>
         </div>
-        <a href="{{ route('admin.courses.approval', $course->id) }}" class="btn-close-preview">
+        <a href="{{ back_url(route('admin.courses.approval', $course->id)) }}" class="btn-close-preview">
             <i class="fas fa-arrow-left"></i> Back to Approval
         </a>
     </div>

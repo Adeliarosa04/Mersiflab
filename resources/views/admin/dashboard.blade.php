@@ -99,7 +99,10 @@
     <div class="card-content-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="font-size: 18px; font-weight: 600; color: #333333; margin: 0;">Top Course</h3>
         <div>
-            <select id="categoryFilter" class="form-select d-inline w-auto" style="font-size: 13px; border: 1px solid #e0e0e0; border-radius: 6px; padding: 6px 12px;">
+            {{-- Sama seperti filter kategori di admin/courses/index.blade.php:
+                 padding-right diberi ruang untuk ikon panah agar teks panjang
+                 seperti "Artificial Intelligence (AI)" tidak menimpanya. --}}
+            <select id="categoryFilter" class="form-select d-inline w-auto" style="font-size: 13px; border: 1px solid #e0e0e0; border-radius: 6px; padding: 6px 36px 6px 12px; min-width: 220px; text-overflow: ellipsis;">
                 <option value="">Filter by Category: All</option>
                 @php
                     $uniqueCategories = collect($topCourses ?? [])->pluck('category')->filter()->unique();

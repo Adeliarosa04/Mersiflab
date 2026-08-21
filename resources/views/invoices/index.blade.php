@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">My Invoices</h4>
-                    <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ back_url(route('home')) }}" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Back
                     </a>
                 </div>

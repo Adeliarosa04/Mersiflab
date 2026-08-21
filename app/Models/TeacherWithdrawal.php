@@ -68,10 +68,17 @@ class TeacherWithdrawal extends Model
      */
     public function getStatusBadgeAttribute()
     {
+        // 'approved' adalah status AKHIR di aplikasi ini: admin mengunggah bukti
+        // transfer, saldo guru dipotong, lalu approve() mengisi approved_at dan
+        // processed_at sekaligus. Karena itu warnanya hijau (success), bukan biru
+        // (info) yang berkesan "masih berjalan".
+        //
+        // 'processed' tidak pernah di-set oleh alur mana pun - nilai enum warisan
+        // yang dipertahankan agar data lama tetap terbaca.
         return match($this->status) {
             'pending' => 'warning',
-            'approved' => 'info',
-            'processed' => 'success',
+            'approved' => 'success',
+            'processed' => 'info',
             'rejected' => 'danger',
             default => 'secondary',
         };
@@ -82,9 +89,13 @@ class TeacherWithdrawal extends Model
      */
     public function getStatusLabelAttribute()
     {
+        // 'approved' sempat diberi label 'Diproses'. Itu menyesatkan: pada saat
+        // status ini tercapai dananya SUDAH ditransfer - bukti transfer diunggah,
+        // saldo guru dipotong, dan processed_at terisi. Guru maupun admin jadi
+        // mengira penarikan masih berjalan padahal sudah cair.
         return match($this->status) {
             'pending' => 'Menunggu Persetujuan',
-            'approved' => 'Diproses', // Changed from 'Disetujui' to 'Diproses' for simplified flow
+            'approved' => 'Disetujui',
             'processed' => 'Diproses',
             'rejected' => 'Ditolak',
             default => 'Tidak Diketahui',

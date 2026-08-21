@@ -301,9 +301,19 @@ class TeacherProfileController extends Controller
             ->get();
         
         // Get recent purchases
+        //
+        // HANYA transaksi yang benar-benar sudah dibayar. Kolom `status` pada
+        // tabel purchases berupa enum ['pending','success','expired','cancelled']
+        // dan hanya 'success' yang berarti lunas - status itu pula yang memicu
+        // penambahan saldo guru di App\Models\Purchase.
+        //
+        // Tanpa saringan ini, transaksi 'pending' (checkout yang ditinggalkan)
+        // ikut tampil di tabel "Penjualan Terbaru" seolah-olah sudah menghasilkan
+        // uang, padahal tidak pernah masuk ke saldo.
         $recentPurchases = Purchase::whereHas('course', function ($query) use ($user) {
             $query->where('teacher_id', $user->id);
         })
+        ->where('status', 'success')
         ->with(['course', 'user'])
         ->orderBy('created_at', 'desc')
         ->limit(10)
@@ -311,10 +321,18 @@ class TeacherProfileController extends Controller
         
         // Get all courses for statistics
         $courses = ClassModel::where('teacher_id', $user->id)->get();
-        
+
+        // Ringkasan keuangan dihitung ulang dari transaksi yang lunas, bukan
+        // dibaca dari kolom teacher_balances. Baris di tabel itu terlanjur
+        // menyimpan angka BRUTO karena bug lama di Purchase::updateTeacherBalance
+        // (lihat App\Support\TeacherEarnings), sehingga kalau dipakai langsung
+        // kartu-kartu di halaman ini akan tetap menampilkan 100% harga kursus.
+        $earnings = \App\Support\TeacherEarnings::summaryFor($user->id);
+
         return view('teacher.finance-management', compact(
             'user',
             'balance',
+            'earnings',
             'withdrawals',
             'recentPurchases',
             'courses'
@@ -340,11 +358,16 @@ class TeacherProfileController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
         
-        // Get teacher balance
-        $balance = TeacherBalance::where('teacher_id', $user->id)->first();
-        
-        if (!$balance || $balance->balance < $validated['amount']) {
-            $errorMessage = 'Jumlah penarikan melebihi saldo yang tersedia. Saldo Anda: Rp ' . number_format($balance ? $balance->balance : 0, 0, ',', '.');
+        // Saldo yang boleh ditarik memakai perhitungan yang SAMA dengan kartu
+        // di halaman - pendapatan bersih setelah komisi, dikurangi penarikan
+        // yang sudah disetujui. Kalau di sini masih membaca kolom
+        // teacher_balances yang bernilai bruto, guru bisa menarik lebih banyak
+        // daripada angka yang ditampilkan kepadanya.
+        $earnings = \App\Support\TeacherEarnings::summaryFor($user->id);
+        $availableBalance = $earnings['available'];
+
+        if ($availableBalance < $validated['amount']) {
+            $errorMessage = 'Jumlah penarikan melebihi saldo yang tersedia. Saldo Anda: Rp ' . number_format($availableBalance, 0, ',', '.');
             
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -366,7 +389,11 @@ class TeacherProfileController extends Controller
                 'bank_name' => $validated['bank_name'],
                 'bank_account_name' => $validated['bank_account_name'],
                 'bank_account_number' => $validated['bank_account_number'],
-                'notes' => $validated['notes'],
+                // ?? null wajib: aturan 'nullable' membuat kunci ini absen dari
+                // hasil validated() ketika field-nya tidak dikirim sama sekali,
+                // dan akses langsung melempar "Undefined array key" yang
+                // tertangkap catch di bawah sebagai kegagalan palsu.
+                'notes' => $validated['notes'] ?? null,
             ]);
             
             // Send notification to all admin users
@@ -390,7 +417,12 @@ class TeacherProfileController extends Controller
                 ]);
             }
             
-            return redirect()->route('teacher.finance-management')
+            // Nama rutenya 'teacher.finance.management' (bertitik), bukan
+            // 'teacher.finance-management'. Nama yang salah membuat setiap
+            // pengajuan non-AJAX melempar RouteNotFoundException, tertangkap
+            // catch di bawah, lalu menampilkan "Terjadi kesalahan" kepada guru
+            // padahal barisnya sudah tersimpan.
+            return redirect()->route('teacher.finance.management')
                 ->with('success', $successMessage);
                 
         } catch (\Exception $e) {

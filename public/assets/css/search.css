@@ -1,0 +1,300 @@
+/* ============================================================
+   MersifLab — Site-wide search results page
+   Loaded after home-modern.css and reuses its tokens/primitives
+   (--ml-*, .ml-btn, .ml-search-field, .ml-suggest).
+   ============================================================ */
+
+.ml-search-page {
+    padding: clamp(32px, 5vw, 56px) 0 clamp(56px, 8vw, 96px);
+    background: var(--ml-surface);
+    min-height: 60vh;
+}
+
+/* Header ---------------------------------------------------- */
+.ml-searchpage-head {
+    max-width: 760px;
+    margin: 0 auto clamp(32px, 5vw, 48px);
+}
+
+.ml-searchpage-title {
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: 700;
+    color: var(--ml-ink);
+    margin-bottom: 20px;
+}
+
+.ml-searchpage-form {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+/* On a light page the input needs its own border, unlike the hero */
+.ml-searchpage-form .ml-search-input {
+    background: var(--ml-surface-soft);
+    border-color: var(--ml-line);
+}
+
+.ml-searchpage-form .ml-search-input:focus {
+    background: #fff;
+}
+
+.ml-searchpage-count {
+    margin: 16px 0 0;
+    font-size: 0.9375rem;
+    color: var(--ml-muted);
+}
+
+.ml-searchpage-count strong {
+    color: var(--ml-ink);
+    font-weight: 600;
+}
+
+/* Empty / prompt states ------------------------------------- */
+.ml-searchpage-state {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 64px) 24px;
+    text-align: center;
+}
+
+.ml-searchpage-state > i {
+    display: block;
+    font-size: 2.5rem;
+    color: var(--ml-primary-light);
+    margin-bottom: 18px;
+}
+
+.ml-searchpage-state h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ml-ink);
+    margin-bottom: 10px;
+}
+
+.ml-searchpage-state p {
+    color: var(--ml-body);
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+
+/* Result groups --------------------------------------------- */
+.ml-result-group {
+    max-width: 760px;
+    margin: 0 auto clamp(28px, 4vw, 40px);
+}
+
+.ml-result-group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ml-muted);
+    margin-bottom: 12px;
+}
+
+.ml-result-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--ml-primary-soft);
+    color: var(--ml-primary);
+    font-size: 0.7rem;
+    letter-spacing: 0;
+}
+
+.ml-result-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.ml-result {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius);
+    background: var(--ml-surface);
+    text-decoration: none;
+    transition: transform 0.22s var(--ml-ease), border-color 0.22s var(--ml-ease),
+        box-shadow 0.22s var(--ml-ease);
+}
+
+.ml-result:hover {
+    transform: translateX(3px);
+    border-color: rgba(26, 118, 209, 0.35);
+    box-shadow: var(--ml-shadow-sm);
+}
+
+.ml-result-thumb {
+    width: 52px;
+    height: 44px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--ml-primary-soft);
+    color: var(--ml-primary);
+    font-size: 0.95rem;
+}
+
+.ml-result-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* A quiet colour cue per result type */
+.ml-result-thumb--page {
+    background: #eef1f6;
+    color: var(--ml-body);
+}
+
+.ml-result-thumb--category {
+    background: #eaf7f0;
+    color: #1d9a63;
+}
+
+.ml-result-thumb--instructor {
+    background: #f4eefb;
+    color: #7a4bb8;
+}
+
+.ml-result-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ml-result-title {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ml-ink);
+    line-height: 1.4;
+}
+
+.ml-result-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    color: var(--ml-muted);
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ml-result-go {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: var(--ml-muted);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.22s var(--ml-ease), transform 0.22s var(--ml-ease);
+}
+
+.ml-result:hover .ml-result-go {
+    opacity: 1;
+    transform: none;
+    color: var(--ml-primary);
+}
+
+/* Responsive ------------------------------------------------ */
+@media (max-width: 575.98px) {
+    .ml-searchpage-form .ml-search-submit {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .ml-searchpage-form .ml-search-submit span {
+        display: none;
+    }
+
+    .ml-result {
+        gap: 12px;
+        padding: 12px 14px;
+    }
+
+    .ml-result-thumb {
+        width: 44px;
+        height: 40px;
+    }
+
+    .ml-result-go {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ml-result,
+    .ml-result-go {
+        transition: none;
+    }
+
+    .ml-result:hover {
+        transform: none;
+    }
+}
+
+/* ============================================================
+   TOMBOL "KEMBALI KE BERANDA"
+   Diletakkan di kiri atas header halaman hasil pencarian,
+   tepat di atas judul "Search". Memakai variabel warna yang
+   sudah dipakai halaman ini (--ml-muted, --ml-primary).
+   ============================================================ */
+.ml-back-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--ml-muted, #7d8ca0);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.ml-back-home:hover,
+.ml-back-home:focus-visible {
+    color: var(--ml-primary, #1a76d1);
+    text-decoration: none;
+}
+
+/* Panah bergeser sedikit ke kiri saat hover sebagai petunjuk arah. */
+.ml-back-home i {
+    font-size: 0.85em;
+    transition: transform 0.2s ease;
+}
+
+.ml-back-home:hover i {
+    transform: translateX(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ml-back-home,
+    .ml-back-home i {
+        transition: none;
+    }
+
+    .ml-back-home:hover i {
+        transform: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .ml-back-home {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+}

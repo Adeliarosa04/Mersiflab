@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Listeners\MigrateGuestChatHistory;
 use App\Models\Course;
 use App\Models\Setting;
 use App\Policies\CoursePolicy;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Policies
         // $this->registerPolicies();
+
+        // Riwayat chat tamu (Mersy AI Assistant) dipindahkan ke akun begitu
+        // pengguna login atau selesai registrasi. Dipasang lewat event supaya
+        // controller autentikasi yang sudah ada tidak perlu diubah.
+        Event::listen(Login::class, MigrateGuestChatHistory::class);
+        Event::listen(Registered::class, MigrateGuestChatHistory::class);
 
         // Alternative: Direct policy registration
         // Gate::policy(Course::class, CoursePolicy::class);

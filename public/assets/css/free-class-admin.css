@@ -1,0 +1,88 @@
+/* ==========================================================================
+   Free Class — repeater "Level Materi" pada form admin.
+   Hanya dipakai oleh admin/free-classes/create & edit.
+   ========================================================================== */
+
+.free-level-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.free-level-item {
+    position: relative;
+    background: #fbfcfe;
+    border: 1px solid #e3e8ef;
+    border-radius: 12px;
+    padding: 18px 18px 4px;
+    margin-bottom: 16px;
+}
+
+.free-level-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.free-level-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #1A76D1;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.free-level-remove {
+    background: none;
+    border: none;
+    color: #d32f2f;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.free-level-remove:hover {
+    background: #fdecea;
+}
+
+/* Ringkasan berkas yang sudah tersimpan pada level ini */
+.free-level-current {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #fff;
+    border: 1px solid #e3e8ef;
+    border-radius: 6px;
+    font-size: 12.5px;
+    word-break: break-all;
+}
+
+.free-level-current a {
+    color: #1976d2;
+    text-decoration: none;
+}
+
+.free-level-current a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 575px) {
+    .free-level-item {
+        padding: 14px 14px 2px;
+    }
+
+    .free-level-section-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

@@ -29,7 +29,13 @@
     <div class="card-content-title">
         <span>All Courses ({{ $courses->total() }} total)</span>
         <div>
-            <select id="categoryFilter" class="form-select d-inline w-auto" style="font-size: 13px; border: 1px solid #e0e0e0; border-radius: 6px; padding: 6px 12px;" onchange="filterByCategory(this.value)">
+            {{-- padding-right 36px (setara 2.25rem bawaan .form-select Bootstrap)
+                 memberi ruang untuk ikon panah, yang sebelumnya tertimpa teks
+                 panjang seperti "Artificial Intelligence (AI)" karena shorthand
+                 "padding: 6px 12px" menimpa padding-right bawaan Bootstrap.
+                 min-width menjaga kotak tetap lega, w-auto tetap membiarkannya
+                 melebar mengikuti pilihan terpanjang. --}}
+            <select id="categoryFilter" class="form-select d-inline w-auto" style="font-size: 13px; border: 1px solid #e0e0e0; border-radius: 6px; padding: 6px 36px 6px 12px; min-width: 220px; text-overflow: ellipsis;" onchange="filterByCategory(this.value)">
                 <option value="all" {{ request('category') == 'all' || !request('category') ? 'selected' : '' }}>Filter by Category: All</option>
                 @foreach(\App\Models\ClassModel::getAvailableCategories() as $key => $label)
                     <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $label }}</option>
@@ -250,6 +256,10 @@ function filterByCategory(category) {
     
     #categoryFilter {
         width: 100% !important;
+        /* Di layar sempit dropdown sudah selebar penuh, jadi min-width
+           dilepas supaya tidak memaksa kotak melebihi lebar kontainer.
+           Ruang untuk ikon panah (padding-right) tetap dipertahankan. */
+        min-width: 0 !important;
     }
     
     /* Table responsive improvements */

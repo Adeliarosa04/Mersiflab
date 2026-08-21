@@ -3,11 +3,15 @@
 @section('title', 'Notifications')
 
 @section('content')
-<div class="page-title" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-    <div>
-        <h1>Notifications</h1>
-        <p style="color: #828282; margin: 5px 0 0 0; font-size: 14px;">System notifications and approval requests</p>
-    </div>
+{{-- Hero banner biru bersama (lihat resources/views/partials/notifications-hero.blade.php),
+     dipakai juga oleh halaman Notifikasi Siswa dan Guru. --}}
+@include('partials.notifications-hero', [
+    'subtitle' => 'System notifications and approval requests',
+])
+
+{{-- Kolom pencarian dipertahankan apa adanya (id, gaya, dan handler-nya tidak
+     diubah) agar fitur filter notifikasi tetap berfungsi seperti semula. --}}
+<div class="page-title admin-notifications-search-row" style="display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 20px;">
     <div style="max-width: 350px; width: 100%; margin-top: 0;">
         <input type="text" id="notificationSearch" placeholder="Search notifications..." style="width: 100%; padding: 10px 15px; border: none; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border-radius: 20px; font-size: 13px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: all 0.3s ease; outline: none;" onfocus="this.style.background='white'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)';" onblur="this.style.background='rgba(255, 255, 255, 0.8)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.05)';">
     </div>

@@ -564,7 +564,12 @@
                         @endif
 
                         <div class="d-flex gap-3 justify-content-end">
-                            <a href="{{ route('teacher.manage.content') }}" class="btn btn-outline-secondary">
+                            {{-- Cancel kembali ke halaman asal (mis. detail course /
+                                 daftar chapter, My Courses, atau Manage Content).
+                                 Fallback ke daftar chapter course ini bila halaman
+                                 sebelumnya tidak diketahui - bukan langsung keluar
+                                 ke Manage Content seperti sebelumnya. --}}
+                            <a href="{{ back_url(route('teacher.chapters.index', $class->id)) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">

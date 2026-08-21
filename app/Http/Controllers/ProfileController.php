@@ -391,12 +391,31 @@ class ProfileController extends Controller
     public function invoice($id)
     {
         $user = auth()->user();
-        
+
+        // Purchase History menautkan /invoice/{subscription_purchase_id}?type=subscription.
+        // Tanpa membaca ?type, id itu dicari lebih dulu di tabel invoices, sehingga
+        // siswa bisa mendapat invoice course milik id yang sama — atau 403.
+        if (request()->query('type') === 'subscription') {
+            $subscription = \App\Models\SubscriptionPurchase::find($id);
+
+            if ($subscription) {
+                if ($user->isStudent() && $subscription->user_id !== $user->id) {
+                    abort(403, 'Anda tidak memiliki akses ke invoice ini.');
+                }
+
+                $invoice = \App\Models\Invoice::where('invoiceable_id', $subscription->id)
+                    ->where('invoiceable_type', \App\Models\SubscriptionPurchase::class)
+                    ->first();
+
+                return view('profile.invoice-subscription', compact('subscription', 'invoice'));
+            }
+        }
+
         // First try to find as invoice (new approach for multiple course invoices)
         $invoice = \App\Models\Invoice::where('id', $id)
             ->with(['invoiceItems.course', 'invoiceItems.purchase'])
             ->first();
-        
+
         // If invoice found, validate access and return invoice view
         if ($invoice) {
             // Check access permission
@@ -463,9 +482,24 @@ class ProfileController extends Controller
                 }
             }
             
+            // Invoice subscription tidak punya invoice_items sama sekali, sedangkan
+            // profile.invoice ditulis khusus untuk pembelian course dan langsung
+            // membaca $invoice->invoiceItems->first()->course. Untuk subscription
+            // pemanggilan itu jatuh ke null dan halaman gagal dirender, sehingga
+            // siswa tidak pernah melihat invoice maupun QRIS-nya.
+            if ($invoice->type === 'subscription') {
+                $subscription = $invoice->invoiceable_type === \App\Models\SubscriptionPurchase::class
+                    ? \App\Models\SubscriptionPurchase::find($invoice->invoiceable_id)
+                    : null;
+
+                if ($subscription) {
+                    return view('profile.invoice-subscription', compact('subscription', 'invoice'));
+                }
+            }
+
             return view('profile.invoice', compact('invoice'));
         }
-        
+
         // Fallback: Try to find as course purchase (backward compatibility)
         $purchase = Purchase::where('id', $id)
             ->with('course.teacher', 'user')
@@ -582,12 +616,17 @@ class ProfileController extends Controller
     public function downloadInvoice($id)
     {
         $user = auth()->user();
-        
+
+        // Halaman invoice subscription mengirim ?type=subscription. Tanpa
+        // membacanya, id yang kebetulan sama dengan id sebuah Purchase akan
+        // mengunduh invoice course — dokumen yang salah.
+        $wantsSubscription = request()->query('type') === 'subscription';
+
         // Try to find as course purchase first
-        $purchase = Purchase::where('id', $id)
+        $purchase = $wantsSubscription ? null : Purchase::where('id', $id)
             ->with('course.teacher', 'user')
             ->first();
-        
+
         // Try to find as subscription purchase if not found as course purchase
         $subscriptionPurchase = null;
         if (!$purchase) {

@@ -22,23 +22,23 @@
                 <ul class="navbar-nav mx-auto align-items-center">
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('/') ? 'active' : '' }}" href="{{ url('/') }}">
-                            Home
+                            {{ __('Home') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('courses*') ? 'active' : '' }}" href="{{ url('/courses') }}">
-                            Courses
+                            {{ __('Courses') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('about*') ? 'active' : '' }}" href="{{ url('/about') }}">
-                            About
+                            {{ __('About') }}
                         </a>
                     </li>
                     @if(!auth()->check() || !auth()->user()->isTeacher())
                     <li class="nav-item">
                         <a class="nav-link {{ Request::is('subscription*') ? 'active' : '' }}" href="{{ url('/subscription') }}">
-                            Subscription
+                            {{ __('Subscription') }}
                         </a>
                     </li>
                     @endif
@@ -47,18 +47,54 @@
                 <!-- RIGHT ACTION -->
                 <ul class="navbar-nav align-items-center">
 
+                    <!-- LANGUAGE SWITCHER -->
+                    {{-- Selalu tampil, baik untuk tamu maupun pengguna login.
+                         Pilihan disimpan di session oleh LanguageController,
+                         lalu diterapkan tiap request oleh middleware SetLocale. --}}
+                    <li class="nav-item me-2 dropdown">
+                        <a class="nav-link ml-lang-toggle" href="#" id="languageDropdown"
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                           aria-label="{{ __('Language') }}" title="{{ __('Language') }}">
+                            <i class="fas fa-globe" aria-hidden="true"></i>
+                            <span class="ml-lang-code">{{ strtoupper(app()->getLocale()) }}</span>
+                            <i class="fas fa-chevron-down ml-lang-caret" aria-hidden="true"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end ml-lang-menu" aria-labelledby="languageDropdown">
+                            <li>
+                                <a class="dropdown-item {{ app()->getLocale() === 'id' ? 'active' : '' }}"
+                                   href="{{ route('language.switch', 'id') }}">
+                                    <span class="ml-lang-flag">🇮🇩</span>
+                                    <span>{{ __('Indonesian') }}</span>
+                                    @if(app()->getLocale() === 'id')
+                                        <i class="fas fa-check ms-auto" aria-hidden="true"></i>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}"
+                                   href="{{ route('language.switch', 'en') }}">
+                                    <span class="ml-lang-flag">🇬🇧</span>
+                                    <span>{{ __('English') }}</span>
+                                    @if(app()->getLocale() === 'en')
+                                        <i class="fas fa-check ms-auto" aria-hidden="true"></i>
+                                    @endif
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     <!-- GUEST -->
                     @guest
                         <li class="nav-item me-2">
                             <a class="btn btn-outline-primary {{ Request::is('login') ? 'active' : '' }}"
                                href="{{ route('login') }}">
-                                Log In
+                                {{ __('Log In') }}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="btn btn-outline-primary {{ Request::is('register') ? 'active' : '' }}"
                                href="{{ route('register') }}">
-                                Sign Up
+                                {{ __('Sign Up') }}
                             </a>
                         </li>
                     @endguest
@@ -257,6 +293,89 @@
 </header>
 
 <style>
+/* ============================================================
+   LANGUAGE SWITCHER
+   Tombol pemilih bahasa di navbar. Memakai palet biru MersifLab
+   (#1A76D1) agar konsisten dengan komponen navbar lainnya.
+   ============================================================ */
+.ml-lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #333 !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.ml-lang-toggle:hover,
+.ml-lang-toggle:focus,
+.ml-lang-toggle[aria-expanded="true"] {
+    color: #1A76D1 !important;
+    border-color: #1A76D1;
+    background: #f4f9ff;
+}
+
+.ml-lang-toggle .ml-lang-code {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.ml-lang-toggle .ml-lang-caret {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+}
+
+.ml-lang-toggle[aria-expanded="true"] .ml-lang-caret {
+    transform: rotate(180deg);
+}
+
+.ml-lang-menu {
+    min-width: 190px;
+    border: 1px solid #e9eef5;
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(15, 27, 45, 0.12);
+}
+
+.ml-lang-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.ml-lang-menu .dropdown-item:hover {
+    background: #f4f9ff;
+    color: #1A76D1;
+}
+
+.ml-lang-menu .dropdown-item.active {
+    background: #eaf3ff;
+    color: #1A76D1;
+    font-weight: 600;
+}
+
+.ml-lang-menu .ml-lang-flag {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+/* Di layar kecil navbar menumpuk, jadi tombol dibuat rata kiri. */
+@media (max-width: 991.98px) {
+    .ml-lang-toggle {
+        width: fit-content;
+        margin: 6px 0;
+    }
+}
+
 /* Profile Card Button Styles */
 .profile-card-btn {
     transition: all 0.2s ease;

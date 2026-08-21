@@ -9,18 +9,13 @@
 @section('content')
 <div class="notifications-page">
     <div class="container">
-        <!-- Page Header -->
-        <div class="notifications-header">
-            <div class="header-content">
-                <div class="header-icon">
-                    <i class="fas fa-bell"></i>
-                </div>
-                <div class="header-text">
-                    <h1 class="page-title">Notifications Center</h1>
-                    <p class="page-subtitle">Stay updated with your latest activities</p>
-                </div>
-            </div>
-        </div>
+        {{-- Hero banner biru bersama (lihat
+             resources/views/partials/notifications-hero.blade.php).
+             Varian 'hero' adalah default, dipakai juga oleh halaman
+             Notifikasi Guru dan Admin agar ketiganya seragam. --}}
+        @include('partials.notifications-hero', [
+            'subtitle' => 'Stay updated with your latest activities',
+        ])
 
         
         <!-- Controls Section -->
@@ -157,7 +152,7 @@
                     </div>
                     <h5>No Notifications Yet</h5>
                     <p>You're all caught up! Check back later for new updates.</p>
-                    <a href="{{ route('home') }}" class="btn-back-home">
+                    <a href="{{ back_url(route('home')) }}" class="btn-back-home">
                         <i class="fas fa-home"></i>
                         Back to Home
                     </a>

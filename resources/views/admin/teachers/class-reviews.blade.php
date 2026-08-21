@@ -14,7 +14,7 @@
 
 <!-- Back Button -->
 <div class="card-content mb-4">
-    <a href="{{ route('admin.teachers.show', $teacher->id) }}" class="btn btn-secondary">
+    <a href="{{ back_url(route('admin.teachers.show', $teacher->id)) }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Back to Teacher Detail
     </a>
 </div>

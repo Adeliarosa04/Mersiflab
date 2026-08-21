@@ -4,101 +4,174 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
 {
     /**
+     * Pesan generik untuk user. Detail teknis hanya masuk ke log server.
+     */
+    private const GENERIC_ERROR = 'Login dengan Google gagal. Silakan coba lagi.';
+
+    /**
+     * Pastikan kredensial OAuth tersedia sebelum mengirim user ke Google.
+     * Tanpa client_id/redirect Google akan membalas "Error 400: invalid_request",
+     * yang tidak bisa dipahami user.
+     */
+    private function googleConfigError(): ?string
+    {
+        $config = config('services.google');
+
+        if (empty($config['client_id']) || empty($config['client_secret'])) {
+            return 'GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET belum diset pada environment.';
+        }
+
+        if (empty($config['redirect'])) {
+            return 'GOOGLE_REDIRECT_URI belum diset pada environment.';
+        }
+
+        return null;
+    }
+
+    /**
      * Redirect to Google for authentication
      */
     public function redirect($role = null)
     {
+        if ($configError = $this->googleConfigError()) {
+            Log::error('Google Auth misconfiguration: ' . $configError);
+
+            return redirect()->route('login')->with('error', self::GENERIC_ERROR);
+        }
+
         // Always set role as student
         Session::put('google_role', 'student');
         Session::save();
-        
-        return Socialite::driver('google')->redirect();
+
+        try {
+            return Socialite::driver('google')->redirect();
+        } catch (\Exception $e) {
+            Log::error('Google Auth Redirect Error: ' . $e->getMessage());
+
+            return redirect()->route('login')->with('error', self::GENERIC_ERROR);
+        }
     }
 
     /**
      * Handle Google callback
      */
-    public function callback()
+    public function callback(\Illuminate\Http\Request $request)
     {
+        if ($configError = $this->googleConfigError()) {
+            Log::error('Google Auth misconfiguration on callback: ' . $configError);
+
+            return redirect()->route('login')->with('error', self::GENERIC_ERROR);
+        }
+
+        // Google mengembalikan ?error=access_denied ketika user membatalkan consent.
+        if ($request->query('error')) {
+            Log::warning('Google Auth denied by user: ' . $request->query('error'));
+
+            return redirect()->route('login')->with('error', 'Login dengan Google dibatalkan.');
+        }
+
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
             // Common intermittent issue: session/state not available on callback.
             // Retry with a stateless request as a defensive fallback and log a warning.
-            \Log::warning('Google Auth InvalidState — retrying stateless fallback: ' . $e->getMessage());
+            Log::warning('Google Auth InvalidState — retrying stateless fallback: ' . $e->getMessage());
             try {
                 $googleUser = Socialite::driver('google')->stateless()->user();
             } catch (\Exception $e2) {
-                \Log::error('Google Auth Stateless fallback failed: ' . $e2->getMessage());
-                return redirect('/login')->with('error', 'Google login failed (session mismatch). Silakan coba lagi.');
+                Log::error('Google Auth Stateless fallback failed: ' . $e2->getMessage());
+                return redirect()->route('login')->with('error', self::GENERIC_ERROR);
             }
         } catch (\Exception $e) {
-            \Log::error('Google Auth Error: ' . $e->getMessage());
-            $msg = $e->getMessage() ?: 'Unknown error during Google authentication. Please try again.';
-            return redirect('/login')->with('error', 'Google login failed: ' . $msg);
+            // Jangan tampilkan pesan mentah (bisa memuat detail request/credential).
+            Log::error('Google Auth Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', self::GENERIC_ERROR);
+        }
+
+        if (empty($googleUser->email)) {
+            Log::error('Google Auth Error: akun Google tidak mengembalikan alamat email.');
+
+            return redirect()->route('login')->with('error', self::GENERIC_ERROR);
         }
 
         // Get role from session (always student)
         $requestedRole = 'student';
 
         // Check if user exists by email OR google_id
-        $existingUserByEmail = User::where('email', $googleUser->email)->first();
-        $existingUserByGoogleId = User::where('google_id', $googleUser->id)->first();
-        
-        // Prioritize user yang ditemukan (email lebih utama karena lebih unik)
-        $existingUser = $existingUserByEmail ?? $existingUserByGoogleId;
+        // ACCOUNT LINKING
+        //
+        // Identitas yang dipakai HANYA yang berasal dari Google setelah
+        // authentication berhasil ($googleUser), bukan input dari frontend.
+        //
+        // Urutan pencarian: google_id dulu, baru email.
+        //   1. google_id  — identitas paling stabil; tidak berubah walau user
+        //                   mengganti alamat Gmail-nya.
+        //   2. email      — Google sudah membuktikan kepemilikan alamat ini,
+        //                   jadi menautkannya ke akun email/password yang sudah
+        //                   ada itu aman dan mencegah akun duplikat.
+        //
+        // Karena kolom google_id UNIQUE dan langkah 1 sudah menghabiskan semua
+        // kemungkinan google_id yang terpakai, langkah 2 tidak akan pernah
+        // menabrak google_id milik user lain.
+        $existingUser = User::where('google_id', $googleUser->id)->first()
+            ?? User::where('email', $googleUser->email)->first();
 
         // If user exists, login directly
         if ($existingUser) {
-            // Update google_id dan email jika belum set atau berbeda
             try {
                 $updateData = [];
-                if (!$existingUser->google_id || $existingUser->google_id !== $googleUser->id) {
+
+                // Tautkan akun email/password yang sudah ada ke Google.
+                if (! $existingUser->google_id) {
                     $updateData['google_id'] = $googleUser->id;
                 }
+
+                // Google sudah memverifikasi kepemilikan email, jadi status
+                // verifikasi akun ikut ditandai (dipakai untuk keamanan akun
+                // di kemudian hari, bukan sebagai syarat login).
+                if (! $existingUser->email_verified_at) {
+                    $updateData['email_verified_at'] = now();
+                    $updateData['email_verification_token'] = null;
+                }
+
+                // User mengganti alamat Gmail-nya: ikut perbarui, kecuali
+                // alamat baru itu sudah dipakai akun lain.
                 if ($existingUser->email !== $googleUser->email) {
-                    // Jika email berbeda, pastikan tidak ada user lain dengan email Google ini
-                    $emailConflict = User::where('email', $googleUser->email)
+                    $emailTaken = User::where('email', $googleUser->email)
                         ->where('id', '!=', $existingUser->id)
-                        ->first();
-                    
-                    if ($emailConflict) {
-                        return redirect('/login')->with('error', 
-                            'Email Google ini sudah digunakan oleh akun lain. Satu akun Google hanya bisa memiliki satu role.'
+                        ->exists();
+
+                    if ($emailTaken) {
+                        Log::warning('Google Auth: email bentrok saat linking', [
+                            'user_id' => $existingUser->id,
+                        ]);
+
+                        return redirect()->route('login')->with('error',
+                            'Email Google ini sudah digunakan oleh akun lain. Silakan login memakai akun tersebut.'
                         );
                     }
-                    
+
                     $updateData['email'] = $googleUser->email;
                 }
-                
+
                 if (!empty($updateData)) {
                     $existingUser->update($updateData);
                 }
             } catch (\Exception $e) {
-                \Log::error('Google Auth Update Error: ' . $e->getMessage());
+                Log::error('Google Auth Update Error: ' . $e->getMessage());
                 // Continue dengan login meskipun update gagal
             }
 
             $user = $existingUser;
         } else {
-            // User baru - buat dengan role student
-            // Pastikan tidak ada user lain dengan email atau google_id yang sama
-            $emailExists = User::where('email', $googleUser->email)->exists();
-            $googleIdExists = User::where('google_id', $googleUser->id)->exists();
-            
-            if ($emailExists || $googleIdExists) {
-                return redirect('/login')->with('error', 
-                    'Akun Google ini sudah terdaftar. Silakan login dengan email dan password.'
-                );
-            }
-            
-            // Create new user with student role
+            // Belum ada akun yang cocok — buat akun baru dengan role student.
             try {
                 $user = User::create([
                     'name' => $googleUser->name,
@@ -107,10 +180,12 @@ class GoogleAuthController extends Controller
                     'password' => null,
                     'role' => 'student',
                     'is_subscriber' => false,
+                    // Email sudah terverifikasi oleh Google.
+                    'email_verified_at' => now(),
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Google Auth Create User Error: ' . $e->getMessage());
-                return redirect('/login')->with('error', 
+                Log::error('Google Auth Create User Error: ' . $e->getMessage());
+                return redirect()->route('login')->with('error',
                     'Gagal membuat akun baru. Silakan coba lagi atau hubungi admin.'
                 );
             }
@@ -152,29 +227,33 @@ class GoogleAuthController extends Controller
             \Log::warning('Failed to import Google avatar for user ' . ($user->id ?? 'unknown') . ': ' . $e->getMessage());
         }
 
-        // Cek banned sebelum login
-        if ($user->isBanned()) {
-            return redirect('/login')->with('error', 'Akun Anda telah dinonaktifkan (banned). Hubungi admin untuk bantuan.');
+        // Akun yang di-ban atau dinonaktifkan tetap tidak boleh masuk,
+        // termasuk lewat Google.
+        if ($user->isBanned() || $user->is_active === false) {
+            Log::warning('Google Auth: login ditolak, akun nonaktif/banned', ['user_id' => $user->id]);
+
+            return redirect()->route('login')->with('error', 'Akun Anda telah dinonaktifkan. Hubungi admin untuk bantuan.');
         }
 
-        // Login user
+        // Bersihkan sisa state OAuth + flash error lama SEBELUM login, supaya
+        // tidak ada popup error yang muncul setelah login berhasil.
+        // Catatan: pembersihan harus dilakukan sebelum Auth::login(), karena
+        // menghapus seluruh isi session SETELAH login akan ikut membuang
+        // identitas user yang baru saja di-set (user tampak logout lagi).
+        Session::forget(['google_role', 'error', 'errors', 'success']);
+
+        // Login user + regenerate session ID (mitigasi session fixation,
+        // konsisten dengan login email/password).
         Auth::login($user, remember: true);
+        $request->session()->regenerate();
 
         // Update last login untuk tracking (sama seperti login biasa)
         $user->updateLastLogin();
-        
+
         // Log login activity (sama seperti login biasa)
         $user->logActivity('google_login', 'User logged in to the system via Google');
 
-        // Clear ALL error-related sessions BEFORE redirect to ensure clean state
-        // This ensures no error popup appears after successful login
-        Session::flush();
-
         // Redirect based on user role - always send to home to avoid unintended redirection back to login
-        // Use ->to() to force the destination
-        $redirect = redirect()->to(route('home'));
-
-        // Set success message (yang penting adalah tidak ada error)
-        return $redirect->with('success', 'Login berhasil!');
+        return redirect()->route('home')->with('success', 'Login berhasil!');
     }
 }

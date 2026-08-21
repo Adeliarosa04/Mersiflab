@@ -61,6 +61,9 @@
         <a href="{{ route('my-certificates') }}" class="profile-nav-item {{ $currentRoute === 'my-certificates' ? 'active' : '' }}">
             <i class="fas fa-certificate me-2"></i> My Certificates
         </a>
+        <a href="{{ route('my-testimonials') }}" class="profile-nav-item {{ $currentRoute === 'my-testimonials' ? 'active' : '' }}">
+            <i class="fas fa-comment-dots me-2"></i> My Testimonials
+        </a>
         <a href="{{ route('purchase-history') }}" class="profile-nav-item {{ $currentRoute === 'purchase-history' ? 'active' : '' }}">
             <i class="fas fa-history me-2"></i> Purchase History
         </a>

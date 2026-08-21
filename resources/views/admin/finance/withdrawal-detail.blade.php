@@ -8,7 +8,7 @@
         <h1>Detail Penarikan - {{ $withdrawal->withdrawal_code }}</h1>
     </div>
     <div>
-        <a href="{{ route('admin.finance.teacher', $withdrawal->teacher_id) }}" class="btn btn-light" style="font-size: 13px; color: #2F80ED; border: 1px solid #e0e0e0; padding: 8px 16px; border-radius: 6px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+        <a href="{{ back_url(route('admin.finance.teacher', $withdrawal->teacher_id)) }}" class="btn btn-light" style="font-size: 13px; color: #2F80ED; border: 1px solid #e0e0e0; padding: 8px 16px; border-radius: 6px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
             <i class="fas fa-arrow-left me-1"></i>Kembali
         </a>
     </div>

@@ -1,0 +1,204 @@
+/* ==========================================================================
+   Legal pages (Terms & Conditions, Privacy Policy)
+   Mengikuti gaya halaman About agar konsisten dengan branding MersifLab.
+   ========================================================================== */
+
+.legal-hero {
+    background: #1A76D1;
+    color: white;
+    padding: 40px 0;
+    text-align: center;
+    border-radius: 20px;
+    margin: 15px 0;
+    margin-top: 40px;
+}
+
+.legal-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.legal-hero p {
+    font-size: 1.05rem;
+    max-width: 700px;
+    margin: 0 auto;
+    opacity: 0.95;
+}
+
+.legal-meta {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 0.85rem;
+}
+
+.legal-wrapper {
+    padding: 30px 0 60px;
+}
+
+/* Daftar isi */
+.legal-toc {
+    background: white;
+    border: 2px solid #1A76D1;
+    border-radius: 15px;
+    padding: 22px 24px;
+    position: sticky;
+    top: 20px;
+}
+
+.legal-toc h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1A76D1;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.legal-toc ol {
+    list-style: none;
+    counter-reset: toc;
+    padding: 0;
+    margin: 0;
+}
+
+.legal-toc li {
+    counter-increment: toc;
+    margin-bottom: 8px;
+}
+
+.legal-toc a {
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.legal-toc a::before {
+    content: counter(toc) ". ";
+    color: #1A76D1;
+    font-weight: 600;
+}
+
+.legal-toc a:hover {
+    color: #1A76D1;
+}
+
+/* Isi dokumen */
+.legal-content {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+    padding: 32px 36px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.legal-notice {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #eff6ff;
+    border-left: 4px solid #1A76D1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 28px;
+    color: #1e3a5f;
+    font-size: 0.92rem;
+}
+
+.legal-notice i {
+    color: #1A76D1;
+    font-size: 1.1rem;
+    margin-top: 2px;
+}
+
+.legal-section {
+    margin-bottom: 30px;
+    scroll-margin-top: 90px;
+}
+
+.legal-section:last-child {
+    margin-bottom: 0;
+}
+
+.legal-section h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.legal-section p,
+.legal-section li {
+    color: #4b5563;
+    font-size: 0.96rem;
+    line-height: 1.8;
+}
+
+.legal-section ul {
+    padding-left: 20px;
+}
+
+.legal-section a {
+    color: #1A76D1;
+}
+
+/* Placeholder untuk bagian yang isinya belum tersedia */
+.legal-placeholder {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-style: italic;
+    margin: 0;
+}
+
+.legal-contact {
+    margin-top: 34px;
+    padding-top: 22px;
+    border-top: 2px solid #f1f5f9;
+    color: #4b5563;
+    font-size: 0.95rem;
+}
+
+.legal-contact strong {
+    color: #111827;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .legal-toc {
+        position: static;
+        margin-bottom: 24px;
+    }
+}
+
+@media (max-width: 767px) {
+    .legal-hero {
+        padding: 30px 15px;
+        margin-top: 20px;
+    }
+
+    .legal-hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .legal-hero p {
+        font-size: 0.95rem;
+    }
+
+    .legal-content {
+        padding: 22px 20px;
+    }
+
+    .legal-section h2 {
+        font-size: 1.1rem;
+    }
+}

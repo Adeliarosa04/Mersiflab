@@ -28,7 +28,7 @@
 
             <!-- MAPS -->
             <div class="col-lg-3 col-md-6">
-                <h5 class="text-white mb-3">Our Location</h5>
+                <h5 class="text-white mb-3">{{ __('Our Location') }}</h5>
                 <div class="footer-map">
                     <iframe
                         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3955.371572540131!2d110.76814567431835!3d-7.534390774365012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7a1476ffffffff%3A0x4fefce7d4aab5646!2sEnuma%20Technology!5e0!3m2!1sid!2sid!4v1768798990373!5m2!1sid!2sid"
@@ -42,28 +42,28 @@
             <div class="col-lg-2 col-md-6">
                 <h5 class="text-white mb-3">MersifLab</h5>
                 <ul class="footer-links">
-                    <li><a href="{{ url('/about') }}">About Us</a></li>
-                    <li><a href="{{ url('/#trust-section') }}">Partnership</a></li>
-                    <li><a href="{{ url('/subscription') }}">Subscription</a></li>
+                    <li><a href="{{ url('/about') }}">{{ __('About Us') }}</a></li>
+                    <li><a href="{{ url('/#trust-section') }}">{{ __('Partnership') }}</a></li>
+                    <li><a href="{{ url('/subscription') }}">{{ __('Subscription') }}</a></li>
                 </ul>
             </div>
             
             <!-- Products -->
             <div class="col-lg-2 col-md-6">
-                <h5 class="text-white mb-3">Products</h5>
+                <h5 class="text-white mb-3">{{ __('Products') }}</h5>
                 <ul class="footer-links">
-                    <li><a href="{{ url('/courses') }}">Courses</a></li>
-                    <li><a href="{{ url('/courses#popular-instructors') }}">Instructors</a></li>
+                    <li><a href="{{ url('/courses') }}">{{ __('Courses') }}</a></li>
+                    <li><a href="{{ url('/courses#popular-instructors') }}">{{ __('Instructors') }}</a></li>
                 </ul>
             </div>
             
             <!-- Others -->
             <div class="col-lg-2 col-md-6">
-                <h5 class="text-white mb-3">Others</h5>
+                <h5 class="text-white mb-3">{{ __('Others') }}</h5>
                 <ul class="footer-links">
                     <li><a href="{{ url('/#faq-section') }}">FAQ</a></li>
-                    <li><a href="{{ url('/syarat-ketentuan') }}">Terms and Conditions</a></li>
-                    <li><a href="{{ url('/privacy-policy') }}">Privacy Policy</a></li>
+                    <li><a href="{{ route('terms') }}">{{ __('Terms and Conditions') }}</a></li>
+                    <li><a href="{{ route('privacy') }}">{{ __('Privacy Policy') }}</a></li>
                 </ul>
             </div>
         </div>

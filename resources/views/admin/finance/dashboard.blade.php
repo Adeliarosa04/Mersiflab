@@ -14,7 +14,7 @@
 
 <!-- Financial Overview Cards -->
 <div class="row mb-4">
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-revenue">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Blue Theme) -->
@@ -22,14 +22,14 @@
                     <i class="fas fa-dollar-sign"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Total Revenue</div>
                     <div class="stat-value">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-payout">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Green Theme) -->
@@ -37,14 +37,14 @@
                     <i class="fas fa-hand-holding-usd"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Teacher Payouts</div>
                     <div class="stat-value">Rp {{ number_format($totalTeacherPayouts, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-commission">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Orange Theme) -->
@@ -52,14 +52,14 @@
                     <i class="fas fa-percentage"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Platform Commission</div>
                     <div class="stat-value">Rp {{ number_format($platformCommission, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-3 mb-3">
+    <div class="col-12 col-sm-6 col-xxl-3 mb-3">
         <div class="stat-card-modern stat-card-pending">
             <div class="d-flex align-items-center">
                 <!-- Left: Large Icon Container (Purple Theme) -->
@@ -67,7 +67,7 @@
                     <i class="fas fa-clock"></i>
                 </div>
                 <!-- Right: Text Info -->
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 stat-text">
                     <div class="stat-label">Pending Withdrawals</div>
                     <div class="stat-value">{{ $pendingWithdrawals }}</div>
                 </div>
@@ -305,13 +305,25 @@ setInterval(() => {
 }
 
 .stat-icon-container {
-    width: 60px;
-    height: 60px;
+    /* Disamakan dengan halaman Detail Keuangan Guru: ikon sedikit dikecilkan
+       dan jaraknya dirapatkan, mengembalikan ~20px ruang untuk kolom nominal. */
+    width: 52px;
+    height: 52px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    margin-right: 12px !important;
+}
+
+/* Pembungkus teks di kanan ikon (keempat kartu memakai ini).
+   min-width: 0 wajib: anak flex secara bawaan ber-min-width auto sehingga
+   MENOLAK menyusut di bawah lebar kontennya. Itulah yang membuat
+   "Rp 1.070.000" terpotong jadi dua baris. */
+.stat-text {
+    min-width: 0;
+    padding-right: 8px;
 }
 
 .stat-icon-revenue-bg {
@@ -360,9 +372,19 @@ setInterval(() => {
 }
 
 .stat-value {
-    font-size: 28px;
+    /* 28px sebelumnya terlalu besar untuk kolom kartu, sehingga "Rp" dan
+       angkanya pecah jadi dua baris. Ukuran kini menyesuaikan lebar layar:
+       22px di monitor lebar, mengecil sampai 17px saat kolom menyempit. */
+    font-size: clamp(17px, 1.45vw, 22px);
     font-weight: 700;
+    letter-spacing: -0.02em;
     color: #333333;
+    line-height: 1.25;
+    /* Kunci utama: nominal TIDAK boleh dipotong ke baris berikutnya. */
+    white-space: nowrap;
+    /* Lebar digit seragam supaya keempat kartu terlihat presisi. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
 }
 
 .card-content {

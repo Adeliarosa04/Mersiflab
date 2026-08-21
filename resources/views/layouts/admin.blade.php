@@ -846,6 +846,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.free-classes.index') }}" class="@if(request()->routeIs('admin.free-classes*')) active @endif">
+                    <i class="fas fa-gift"></i>
+                    <span>Free Course</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.categories.index') }}" class="@if(request()->routeIs('admin.categories*')) active @endif">
                     <i class="fas fa-tags"></i>
                     <span>Categories</span>
